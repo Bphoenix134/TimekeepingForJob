@@ -1,4 +1,4 @@
-package com.example.timemanagerforjob.presentation.main
+package com.example.timemanagerforjob.presentation.work
 
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -17,7 +17,7 @@ import javax.inject.Inject
 
 @RequiresApi(Build.VERSION_CODES.O)
 @HiltViewModel
-class CalendarViewModel @Inject constructor(
+class WorkViewModel @Inject constructor(
     private val getDaysOfMonthUseCase: GetDaysOfMonthUseCase
 ) : ViewModel() {
 

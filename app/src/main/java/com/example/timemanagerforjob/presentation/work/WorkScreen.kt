@@ -1,4 +1,4 @@
-package com.example.timemanagerforjob.presentation.main
+package com.example.timemanagerforjob.presentation.work
 
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -9,8 +9,6 @@ import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,7 +22,7 @@ import java.time.format.DateTimeFormatter
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun CalendarScreen(viewModel: CalendarViewModel = hiltViewModel()) {
+fun CalendarScreen(viewModel: WorkViewModel = hiltViewModel()) {
     val currentMonth by viewModel.currentMonth.collectAsState()
     val selectedDays by viewModel.selectedDays.collectAsState()
     val daysOfMonth by viewModel.daysOfMonth.collectAsState()
