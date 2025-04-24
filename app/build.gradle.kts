@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.google.dagger)
     id("kotlin-kapt")
+    alias(libs.plugins.google.ksp)
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
@@ -37,6 +39,9 @@ android {
     }
     kotlinOptions {
         jvmTarget = "1.8"
+    }
+    ksp {
+        arg("room.schemaLocation", "$projectDir/schemas")
     }
     buildFeatures {
         compose = true
@@ -74,4 +79,8 @@ dependencies {
     implementation(libs.dagger.hilt.android)
     kapt(libs.dagger.hilt.compiler)
     implementation((libs.androidx.hilt))
+    implementation(libs.androidx.room.runtime)
+    ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.room.ktx)
+    implementation(libs.jetbrains.kotlin.stdlib)
 }

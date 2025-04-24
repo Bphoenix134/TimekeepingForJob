@@ -23,10 +23,12 @@ import java.time.format.DateTimeFormatter
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun CalendarScreen(viewModel: WorkViewModel = hiltViewModel()) {
-    val currentMonth by viewModel.currentMonth.collectAsState()
+    val currentMonth by viewModel.currentYearMonth.collectAsState()
     val selectedDays by viewModel.selectedDays.collectAsState()
     val daysOfMonth by viewModel.daysOfMonth.collectAsState()
-    val today = LocalDate.now().dayOfMonth
+    val today: LocalDate = LocalDate.now()
+    val todayDay = today.dayOfMonth
+    val todayMonth = today.month
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Row(
@@ -54,8 +56,8 @@ fun CalendarScreen(viewModel: WorkViewModel = hiltViewModel()) {
                         .size(40.dp)
                         .background(
                             when {
-                                day == today -> Color.Cyan
-                                selectedDays.contains(day) -> Color.Green
+                                todayMonth == currentMonth.month && day == todayDay -> Color.Green
+                                selectedDays.contains(day) -> Color.Red
                                 else -> Color.Transparent
                             }
                         )
