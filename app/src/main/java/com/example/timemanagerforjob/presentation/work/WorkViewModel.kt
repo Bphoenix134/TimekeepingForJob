@@ -48,12 +48,15 @@ class WorkViewModel @Inject constructor(
     private fun updateSelectedDays() {
         val month = _currentYearMonth.value
 
-        if (!_selectedDaysPerMonth.containsKey(month)) {
-            val autoSelected = getDefaultWeekendAndHolidays(month)
-            _selectedDaysPerMonth[month] = autoSelected.toMutableSet()
-        }
+        viewModelScope.launch {
+            val savedDays = calendarRepository.getSelectedDays(month.year, month.monthValue)
+            val defaultDays = getDefaultWeekendAndHolidays(month)
 
-        _selectedDays.value = _selectedDaysPerMonth[month] ?: emptySet()
+            val selectedDaysSet = (defaultDays + savedDays).toSet()
+
+            _selectedDaysPerMonth[month] = selectedDaysSet.toMutableSet()
+            _selectedDays.value = selectedDaysSet
+        }
     }
 
     private fun getDefaultWeekendAndHolidays(month: YearMonth): Set<Int> {

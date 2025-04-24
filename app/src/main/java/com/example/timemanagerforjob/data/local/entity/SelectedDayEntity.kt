@@ -3,9 +3,11 @@ package com.example.timemanagerforjob.data.local.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "selected_days")
+@Entity(
+    tableName = "selected_days",
+    primaryKeys = ["day", "month", "year"]
+)
 data class SelectedDayEntity(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val day: Int,
     val month: Int,
     val year: Int

@@ -24,7 +24,9 @@ object AppModule {
             app,
             CalendarDatabase::class.java,
             "calendar_db"
-        ).build()
+        )
+            .fallbackToDestructiveMigration(false)
+            .build()
     }
 
     @Provides

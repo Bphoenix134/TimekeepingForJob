@@ -1,0 +1,45 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "797bfbf15aa1c0c6ace4a47b4567095c",
+    "entities": [
+      {
+        "tableName": "selected_days",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`day` INTEGER NOT NULL, `month` INTEGER NOT NULL, `year` INTEGER NOT NULL, PRIMARY KEY(`day`, `month`, `year`))",
+        "fields": [
+          {
+            "fieldPath": "day",
+            "columnName": "day",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "month",
+            "columnName": "month",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "year",
+            "columnName": "year",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "day",
+            "month",
+            "year"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '797bfbf15aa1c0c6ace4a47b4567095c')"
+    ]
+  }
+}
