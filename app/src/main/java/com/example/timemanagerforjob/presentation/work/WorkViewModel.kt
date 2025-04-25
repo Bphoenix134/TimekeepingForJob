@@ -4,13 +4,18 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.timemanagerforjob.domain.model.TimeReport
 import com.example.timemanagerforjob.domain.repository.CalendarRepository
+import com.example.timemanagerforjob.domain.repository.TimeReportRepository
 import com.example.timemanagerforjob.domain.usecase.GetDaysOfMonthUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.isActive
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
@@ -19,6 +24,7 @@ import javax.inject.Inject
 @RequiresApi(Build.VERSION_CODES.O)
 @HiltViewModel
 class WorkViewModel @Inject constructor(
+    private val timeReportRepository: TimeReportRepository,
     private val getDaysOfMonthUseCase: GetDaysOfMonthUseCase,
     private val calendarRepository: CalendarRepository
 ) : ViewModel() {
@@ -31,7 +37,12 @@ class WorkViewModel @Inject constructor(
     val selectedDays: StateFlow<Set<Int>> = _selectedDays.asStateFlow()
 
     private val _daysOfMonth = MutableStateFlow<List<Int>>(emptyList())
-    val daysOfMonth: StateFlow<List<Int>> = _daysOfMonth.asStateFlow()
+
+    private val _reportState = MutableStateFlow<TimeReport?>(null)
+    val reportState: StateFlow<TimeReport?> = _reportState.asStateFlow()
+    private val _workedTime = MutableStateFlow(0L)
+    val workedTime: StateFlow<Long> = _workedTime.asStateFlow()
+    private var timerJob: Job? = null
 
     init {
         loadDaysOfMonth()
@@ -96,5 +107,41 @@ class WorkViewModel @Inject constructor(
     fun goToPreviousMonth() {
         _currentYearMonth.value = _currentYearMonth.value.minusMonths(1)
         loadDaysOfMonth()
+    }
+
+    fun startTimeReport() {
+        val start = System.currentTimeMillis()
+        _reportState.value = TimeReport(
+            date = LocalDate.now(),
+            startTime = start,
+            endTime = null
+        )
+
+        timerJob?.cancel()
+
+        timerJob = viewModelScope.launch {
+            while (isActive) {
+                val currentTime = System.currentTimeMillis()
+                _workedTime.value = currentTime - start
+                delay(1000)
+            }
+        }
+    }
+
+    fun stopTimeReport() {
+        val current = _reportState.value ?: return
+        val finished = current.copy(endTime = System.currentTimeMillis())
+        _reportState.value = finished
+
+        timerJob?.cancel()
+        _workedTime.value = 0L
+
+        viewModelScope.launch {
+            timeReportRepository.saveReport(finished)
+        }
+    }
+
+    fun pauseTimeReport(){
+
     }
 }

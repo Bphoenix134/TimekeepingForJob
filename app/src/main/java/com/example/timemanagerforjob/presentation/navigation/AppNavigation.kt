@@ -6,7 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.timemanagerforjob.presentation.work.CalendarScreen
+import com.example.timemanagerforjob.presentation.work.WorkScreen
 import com.example.timemanagerforjob.presentation.statistics.StatisticsScreen
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -14,7 +14,7 @@ import com.example.timemanagerforjob.presentation.statistics.StatisticsScreen
 fun AppNavigation(navController: NavHostController) {
     NavHost(navController = navController, startDestination = "calendar") {
         composable("calendar") {
-            CalendarScreen()
+            WorkScreen()
         }
         composable("statistics") {
             StatisticsScreen()
