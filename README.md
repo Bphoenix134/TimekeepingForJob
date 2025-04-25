@@ -1,4 +1,4 @@
-# TimeManagerForJob
+# TimekeepingForJob
 
 This is a mobile application built with Kotlin using Clean Architecture and Jetpack Compose. The app is designed to help users track their work hours, manage their work schedule, and keep track of time with a user-friendly calendar interface.
 
