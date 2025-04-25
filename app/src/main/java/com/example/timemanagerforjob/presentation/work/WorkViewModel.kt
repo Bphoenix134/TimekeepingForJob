@@ -8,6 +8,8 @@ import com.example.timemanagerforjob.domain.model.TimeReport
 import com.example.timemanagerforjob.domain.repository.CalendarRepository
 import com.example.timemanagerforjob.domain.repository.TimeReportRepository
 import com.example.timemanagerforjob.domain.usecase.GetDaysOfMonthUseCase
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.State
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -43,6 +45,12 @@ class WorkViewModel @Inject constructor(
     private val _workedTime = MutableStateFlow(0L)
     val workedTime: StateFlow<Long> = _workedTime.asStateFlow()
     private var timerJob: Job? = null
+
+    private var pauseTime: Long = 0L
+    private var accumulatedTime: Long = 0L
+
+    private var _isPaused = mutableStateOf(false)
+    val isPaused: State<Boolean> get() = _isPaused
 
     init {
         loadDaysOfMonth()
@@ -111,18 +119,21 @@ class WorkViewModel @Inject constructor(
 
     fun startTimeReport() {
         val start = System.currentTimeMillis()
+
         _reportState.value = TimeReport(
             date = LocalDate.now(),
             startTime = start,
             endTime = null
         )
 
+        accumulatedTime = 0L
+        pauseTime = 0L
         timerJob?.cancel()
 
         timerJob = viewModelScope.launch {
             while (isActive) {
                 val currentTime = System.currentTimeMillis()
-                _workedTime.value = currentTime - start
+                _workedTime.value = accumulatedTime + (currentTime - start)
                 delay(1000)
             }
         }
@@ -141,7 +152,23 @@ class WorkViewModel @Inject constructor(
         }
     }
 
-    fun pauseTimeReport(){
+    fun pauseTimeReport() {
+        pauseTime = System.currentTimeMillis()
+        timerJob?.cancel()
+        _isPaused.value = true
+    }
 
+    fun resumeTimeReport() {
+        val resumedStart = System.currentTimeMillis()
+        accumulatedTime += (resumedStart - pauseTime)
+
+        timerJob = viewModelScope.launch {
+            while (isActive) {
+                val currentTime = System.currentTimeMillis()
+                _workedTime.value = accumulatedTime + (currentTime - resumedStart)
+                delay(1000)
+            }
+        }
+        _isPaused.value = false
     }
 }

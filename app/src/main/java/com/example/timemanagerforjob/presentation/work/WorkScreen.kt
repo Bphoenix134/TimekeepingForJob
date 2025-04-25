@@ -42,6 +42,7 @@ fun WorkScreen(viewModel: WorkViewModel = hiltViewModel()) {
     val reportState by viewModel.reportState.collectAsState()
     val workedTime by viewModel.workedTime.collectAsState()
     val isWorking = reportState?.endTime == null && reportState != null
+    val isPaused by viewModel.isPaused
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Row(
@@ -139,24 +140,55 @@ fun WorkScreen(viewModel: WorkViewModel = hiltViewModel()) {
                         } else {
                             viewModel.startTimeReport()
                         }
-                    }
-                    .padding(vertical = 12.dp)
+                    },
+                contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = if (isWorking) "Завершить работу" else "Начать работу",
                     color = if (isWorking) Color.White else Color.Black,
-                    modifier = Modifier.align(Alignment.Center),
                     fontSize = 19.sp,
                 )
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            if (isWorking) {
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(if (isPaused) Color(0xFF4a4a4a) else Color.Gray)
+                        .border(
+                            width = 0.5.dp,
+                            color = Color.Black,
+                            shape = RoundedCornerShape(50)
+                        )
+                        .clickable {
+                            if (isPaused) {
+                                viewModel.resumeTimeReport()
+                            } else {
+                                viewModel.pauseTimeReport()
+                            }
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = if (isPaused) "Возобновить работу" else "Приостановить",
+                        color = Color.White,
+                        fontSize = 19.sp,
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             if (isWorking) {
                 Text(
                     text = formatTime(workedTime),
                     fontSize = 24.sp,
-                    style = MaterialTheme.typography.headlineMedium
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = if (isPaused) Color.Red else Color.Unspecified
                 )
             } else if (reportState != null) {
                 val duration = reportState?.durationMillis
