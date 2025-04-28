@@ -12,6 +12,6 @@ interface TimeReportDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTimeReport(report: TimeReportEntity)
 
-    @Query("SELECT * FROM time_reports WHERE date = :date")
+    @Query("SELECT * FROM time_reports WHERE date = :date LIMIT 1")
     suspend fun getTimeReportByDate(date: LocalDate): TimeReportEntity?
 }

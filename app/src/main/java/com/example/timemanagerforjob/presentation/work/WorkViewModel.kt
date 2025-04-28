@@ -43,7 +43,7 @@ class WorkViewModel @Inject constructor(
     private val _reportState = MutableStateFlow<TimeReport?>(null)
     val reportState: StateFlow<TimeReport?> = _reportState.asStateFlow()
     private val _workedTime = MutableStateFlow(0L)
-    val workedTime: StateFlow<Long> = _workedTime.asStateFlow()
+    val workedTime: StateFlow<Long> = _workedTime
     private var timerJob: Job? = null
 
     private var pauseTime: Long = 0L
@@ -51,6 +51,9 @@ class WorkViewModel @Inject constructor(
 
     private var _isPaused = mutableStateOf(false)
     val isPaused: State<Boolean> get() = _isPaused
+
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
     init {
         loadDaysOfMonth()
@@ -118,37 +121,52 @@ class WorkViewModel @Inject constructor(
     }
 
     fun startTimeReport() {
-        val start = System.currentTimeMillis()
+        viewModelScope.launch {
+            val todayReport = timeReportRepository.getReportByDate(LocalDate.now())
 
-        _reportState.value = TimeReport(
-            date = LocalDate.now(),
-            startTime = start,
-            endTime = null
-        )
+            if (todayReport?.endTime != null) {
+                _errorMessage.value = "Сегодняшняя работа уже завершена"
+                return@launch
+            }
 
-        accumulatedTime = 0L
-        pauseTime = 0L
-        timerJob?.cancel()
+            val start = System.currentTimeMillis()
 
-        timerJob = viewModelScope.launch {
-            while (isActive) {
-                val currentTime = System.currentTimeMillis()
-                _workedTime.value = accumulatedTime + (currentTime - start)
-                delay(1000)
+            _reportState.value = TimeReport(
+                date = LocalDate.now(),
+                startTime = start,
+                endTime = null,
+                workTime = 0L
+            )
+
+            timerJob?.cancel()
+
+            timerJob = viewModelScope.launch {
+                while (isActive) {
+                    val currentTime = System.currentTimeMillis()
+                    _workedTime.value = currentTime - start
+                    delay(1000)
+                }
             }
         }
     }
 
     fun stopTimeReport() {
-        val current = _reportState.value ?: return
-        val finished = current.copy(endTime = System.currentTimeMillis())
-        _reportState.value = finished
+        val currentTimeReport = _reportState.value ?: return
+        val end = System.currentTimeMillis()
+        val workDuration = _workedTime.value
+
+        val finishedReport = currentTimeReport.copy(
+            endTime = end,
+            workTime = workDuration
+        )
+
+        _reportState.value = finishedReport
 
         timerJob?.cancel()
         _workedTime.value = 0L
 
         viewModelScope.launch {
-            timeReportRepository.saveReport(finished)
+            timeReportRepository.saveReport(finishedReport)
         }
     }
 
@@ -162,10 +180,12 @@ class WorkViewModel @Inject constructor(
         val resumedStart = System.currentTimeMillis()
         accumulatedTime += (resumedStart - pauseTime)
 
+        val startTime = reportState.value!!.startTime
+
         timerJob = viewModelScope.launch {
             while (isActive) {
                 val currentTime = System.currentTimeMillis()
-                _workedTime.value = accumulatedTime + (currentTime - resumedStart)
+                _workedTime.value = (currentTime - startTime) - accumulatedTime
                 delay(1000)
             }
         }

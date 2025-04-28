@@ -9,7 +9,7 @@ import com.example.timemanagerforjob.data.local.entity.TimeReportEntity
 
 @Database(
     entities = [TimeReportEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

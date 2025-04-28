@@ -10,5 +10,6 @@ data class TimeReportEntity(
     val id: Long = 0,
     val date: LocalDate,
     val startTime: Long,
-    val endTime: Long?
+    val endTime: Long?,
+    val workTime: Long
 )

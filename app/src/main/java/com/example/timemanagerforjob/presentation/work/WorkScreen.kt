@@ -115,7 +115,7 @@ fun WorkScreen(viewModel: WorkViewModel = hiltViewModel()) {
             }
         }
 
-        Spacer(modifier = Modifier.height(25.dp))
+        Spacer(modifier = Modifier.height(40.dp))
 
         Column(
             modifier = Modifier
@@ -191,9 +191,9 @@ fun WorkScreen(viewModel: WorkViewModel = hiltViewModel()) {
                     color = if (isPaused) Color.Red else Color.Unspecified
                 )
             } else if (reportState != null) {
-                val duration = reportState?.durationMillis
+                val duration = reportState?.workTime ?: 0L
                 Text(
-                    text = "Вы отработали сегодня: ${formatTime(duration ?: 0)}",
+                    text = "Вы отработали сегодня: ${formatTime(duration)}",
                     fontSize = 20.sp
                 )
             }

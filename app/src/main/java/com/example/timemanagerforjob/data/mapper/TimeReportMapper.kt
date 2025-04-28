@@ -7,7 +7,8 @@ fun TimeReportEntity.toDomain(): TimeReport {
     return TimeReport(
         date = date,
         startTime = startTime,
-        endTime = endTime
+        endTime = endTime,
+        workTime = workTime
     )
 }
 
@@ -15,6 +16,7 @@ fun TimeReport.toEntity(): TimeReportEntity {
     return TimeReportEntity(
         date = date,
         startTime = startTime,
-        endTime = endTime
+        endTime = endTime,
+        workTime = workTime
     )
 }

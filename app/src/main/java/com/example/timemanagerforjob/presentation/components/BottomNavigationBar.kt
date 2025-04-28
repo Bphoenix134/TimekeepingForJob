@@ -30,9 +30,6 @@ fun BottomNavigationBar(navController: NavController, currentRoute: String?) {
                 },
                 icon = {
                     Icon(imageVector = item.icon, contentDescription = item.label)
-                },
-                label = {
-                    Text(text = item.label)
                 }
             )
         }
