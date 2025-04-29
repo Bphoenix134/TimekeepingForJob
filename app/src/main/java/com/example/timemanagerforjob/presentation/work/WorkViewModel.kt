@@ -1,194 +1,226 @@
 package com.example.timemanagerforjob.presentation.work
 
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.Intent
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.timemanagerforjob.domain.model.TimeReport
 import com.example.timemanagerforjob.domain.repository.CalendarRepository
 import com.example.timemanagerforjob.domain.repository.TimeReportRepository
-import com.example.timemanagerforjob.domain.usecase.GetDaysOfMonthUseCase
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.State
+import com.example.timemanagerforjob.domain.usecases.GetMonthDataUseCase
+import com.example.timemanagerforjob.domain.usecases.ManageTimeReportUseCase
+import com.example.timemanagerforjob.utils.preferences.AppPreferences
+import com.example.timemanagerforjob.domain.model.Result
+import com.example.timemanagerforjob.services.WorkSessionService
+import com.example.timemanagerforjob.utils.events.SessionEvent
+import com.example.timemanagerforjob.utils.events.SessionEventBus
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.isActive
-import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 import javax.inject.Inject
 
 @RequiresApi(Build.VERSION_CODES.O)
 @HiltViewModel
+@SuppressLint("StaticFieldLeak")
 class WorkViewModel @Inject constructor(
     private val timeReportRepository: TimeReportRepository,
-    private val getDaysOfMonthUseCase: GetDaysOfMonthUseCase,
-    private val calendarRepository: CalendarRepository
+    private val calendarRepository: CalendarRepository,
+    private val getMonthDataUseCase: GetMonthDataUseCase,
+    private val manageTimeReportUseCase: ManageTimeReportUseCase,
+    private val appPreferences: AppPreferences,
+    private val context: Context
 ) : ViewModel() {
 
-    private val _currentYearMonth = MutableStateFlow(YearMonth.now())
-    val currentYearMonth: StateFlow<YearMonth> = _currentYearMonth.asStateFlow()
-
-    private val _selectedDaysPerMonth = mutableMapOf<YearMonth, MutableSet<Int>>()
-    private val _selectedDays = MutableStateFlow<Set<Int>>(emptySet())
-    val selectedDays: StateFlow<Set<Int>> = _selectedDays.asStateFlow()
-
-    private val _daysOfMonth = MutableStateFlow<List<Int>>(emptyList())
-
-    private val _reportState = MutableStateFlow<TimeReport?>(null)
-    val reportState: StateFlow<TimeReport?> = _reportState.asStateFlow()
-    private val _workedTime = MutableStateFlow(0L)
-    val workedTime: StateFlow<Long> = _workedTime
-    private var timerJob: Job? = null
-
-    private var pauseTime: Long = 0L
-    private var accumulatedTime: Long = 0L
-
-    private var _isPaused = mutableStateOf(false)
-    val isPaused: State<Boolean> get() = _isPaused
-
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+    private val _uiState = MutableStateFlow(WorkUiState())
+    val uiState: StateFlow<WorkUiState> = _uiState.asStateFlow()
 
     init {
-        loadDaysOfMonth()
-    }
+        initializeFirstLaunch()
+        loadMonthData()
 
-    private fun loadDaysOfMonth() {
+        // Подписываемся на события через SharedFlow
         viewModelScope.launch {
-            val month = _currentYearMonth.value
-            _daysOfMonth.value = getDaysOfMonthUseCase(month)
-            updateSelectedDays()
+            SessionEventBus.sessionEvents.collect { event ->
+                when (event) {
+                    is SessionEvent.SessionStopped -> {
+                        Log.d("WorkViewModel", "Received stop event: ${event.timeReport}")
+                        _uiState.update {
+                            it.copy(
+                                sessionState = null,
+                                reportState = event.timeReport,
+                                workedTime = event.timeReport.workTime,
+                                isPaused = false,
+                                errorMessage = null
+                            )
+                        }
+                    }
+                    is SessionEvent.SessionPausedResumed -> {
+                        Log.d("WorkViewModel", "Received pause/resume event: ${event.session}, isPaused=${event.isPaused}")
+                        _uiState.update {
+                            it.copy(
+                                sessionState = event.session,
+                                isPaused = event.isPaused,
+                                workedTime = event.session.calculateWorkTime(),
+                                errorMessage = null
+                            )
+                        }
+                    }
+                    is SessionEvent.SessionUpdated -> {
+                        Log.d("WorkViewModel", "Received update event: workTime=${event.workTime}, isPaused=${event.isPaused}")
+                        _uiState.update {
+                            it.copy(
+                                sessionState = event.session,
+                                workedTime = event.workTime,
+                                isPaused = event.isPaused,
+                                errorMessage = null
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 
-    private fun updateSelectedDays() {
-        val month = _currentYearMonth.value
+    private fun initializeFirstLaunch() {
+        if (appPreferences.isFirstLaunch()) {
+            viewModelScope.launch {
+                val currentYear = YearMonth.now().year
+                for (month in 1..12) {
+                    calendarRepository.initializeWeekendDays(currentYear, month)
+                }
+                appPreferences.setFirstLaunchCompleted()
+            }
+        }
+    }
 
+    private fun loadMonthData() {
         viewModelScope.launch {
-            val savedDays = calendarRepository.getSelectedDays(month.year, month.monthValue)
-            val defaultDays = getDefaultWeekendAndHolidays(month)
+            _uiState.update { it.copy(isLoading = true) }
+            val month = _uiState.value.currentMonth
 
-            val selectedDaysSet = (defaultDays + savedDays).toSet()
+            val yearInitialized = appPreferences.isYearInitialized(month.year)
+            if (!yearInitialized) {
+                for (monthValue in 1..12) {
+                    calendarRepository.initializeWeekendDays(month.year, monthValue)
+                }
+                appPreferences.setYearInitialized(month.year)
+            }
 
-            _selectedDaysPerMonth[month] = selectedDaysSet.toMutableSet()
-            _selectedDays.value = selectedDaysSet
+            when (val result = getMonthDataUseCase(month)) {
+                is Result.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            selectedDays = result.value.selectedDays.toSet(),
+                            isLoading = false,
+                            errorMessage = null
+                        )
+                    }
+                }
+                is Result.Failure -> {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = result.exception.message ?: "Failed to load month data"
+                        )
+                    }
+                }
+            }
         }
-    }
-
-    private fun getDefaultWeekendAndHolidays(month: YearMonth): Set<Int> {
-        val weekends = (1..month.lengthOfMonth()).filter { day ->
-            val date = LocalDate.of(month.year, month.month, day)
-            date.dayOfWeek == DayOfWeek.SATURDAY || date.dayOfWeek == DayOfWeek.SUNDAY
-        }
-
-        return (weekends).toSet()
     }
 
     fun toggleDaySelection(day: Int) {
-        val month = _currentYearMonth.value
-        val days = _selectedDaysPerMonth.getOrPut(month) { mutableSetOf() }
-
-        val updated = days.toMutableSet()
+        val month = _uiState.value.currentMonth
+        val currentDays = _uiState.value.selectedDays.toMutableSet()
 
         viewModelScope.launch {
-            if (updated.contains(day)) {
-                updated.remove(day)
-                calendarRepository.removeSelectedDay(day, month.monthValue, month.year)
-            } else {
-                updated.add(day)
-                calendarRepository.saveSelectedDay(day, month.monthValue, month.year)
+            try {
+                if (currentDays.contains(day)) {
+                    calendarRepository.removeSelectedDay(day, month.monthValue, month.year)
+                    currentDays.remove(day)
+                } else {
+                    calendarRepository.saveSelectedDay(day, month.monthValue, month.year)
+                    currentDays.add(day)
+                }
+                _uiState.update { it.copy(selectedDays = currentDays.toSet(), errorMessage = null) }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(errorMessage = "Failed to update day: ${e.message}")
+                }
             }
-
-            _selectedDaysPerMonth[month] = updated
-            _selectedDays.value = updated.toSet()
         }
     }
 
-    fun goToNextMonth() {
-        _currentYearMonth.value = _currentYearMonth.value.plusMonths(1)
-        loadDaysOfMonth()
-    }
-
     fun goToPreviousMonth() {
-        _currentYearMonth.value = _currentYearMonth.value.minusMonths(1)
-        loadDaysOfMonth()
+        _uiState.update { it.copy(currentMonth = it.currentMonth.minusMonths(1)) }
+        loadMonthData()
     }
 
+    fun goToNextMonth() {
+        _uiState.update { it.copy(currentMonth = it.currentMonth.plusMonths(1)) }
+        loadMonthData()
+    }
+
+    @SuppressLint("NewApi")
     fun startTimeReport() {
         viewModelScope.launch {
-            val todayReport = timeReportRepository.getReportByDate(LocalDate.now())
-
-            if (todayReport?.endTime != null) {
-                _errorMessage.value = "Сегодняшняя работа уже завершена"
-                return@launch
-            }
-
-            val start = System.currentTimeMillis()
-
-            _reportState.value = TimeReport(
-                date = LocalDate.now(),
-                startTime = start,
-                endTime = null,
-                workTime = 0L
-            )
-
-            timerJob?.cancel()
-
-            timerJob = viewModelScope.launch {
-                while (isActive) {
-                    val currentTime = System.currentTimeMillis()
-                    _workedTime.value = currentTime - start
-                    delay(1000)
+            when (val result = manageTimeReportUseCase.startSession(LocalDate.now())) {
+                is Result.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            sessionState = result.value,
+                            reportState = null,
+                            isPaused = false,
+                            workedTime = result.value.calculateWorkTime(),
+                            errorMessage = null
+                        )
+                    }
+                    WorkSessionService.startService(context, result.value)
+                }
+                is Result.Failure -> {
+                    _uiState.update {
+                        it.copy(
+                            errorMessage = result.exception.message ?: "Failed to start session"
+                        )
+                    }
                 }
             }
         }
     }
 
     fun stopTimeReport() {
-        val currentTimeReport = _reportState.value ?: return
-        val end = System.currentTimeMillis()
-        val workDuration = _workedTime.value
-
-        val finishedReport = currentTimeReport.copy(
-            endTime = end,
-            workTime = workDuration
-        )
-
-        _reportState.value = finishedReport
-
-        timerJob?.cancel()
-        _workedTime.value = 0L
-
-        viewModelScope.launch {
-            timeReportRepository.saveReport(finishedReport)
-        }
+        WorkSessionService.stopService(context)
     }
 
     fun pauseTimeReport() {
-        pauseTime = System.currentTimeMillis()
-        timerJob?.cancel()
-        _isPaused.value = true
+        val pauseResumeIntent = Intent(context, WorkSessionService::class.java).apply {
+            action = WorkSessionService.ACTION_PAUSE_RESUME
+            putExtra("isPaused", false)
+        }
+        ContextCompat.startForegroundService(context, pauseResumeIntent)
     }
 
     fun resumeTimeReport() {
-        val resumedStart = System.currentTimeMillis()
-        accumulatedTime += (resumedStart - pauseTime)
-
-        val startTime = reportState.value!!.startTime
-
-        timerJob = viewModelScope.launch {
-            while (isActive) {
-                val currentTime = System.currentTimeMillis()
-                _workedTime.value = (currentTime - startTime) - accumulatedTime
-                delay(1000)
-            }
+        val pauseResumeIntent = Intent(context, WorkSessionService::class.java).apply {
+            action = WorkSessionService.ACTION_PAUSE_RESUME
+            putExtra("isPaused", true)
         }
-        _isPaused.value = false
+        ContextCompat.startForegroundService(context, pauseResumeIntent)
+    }
+
+    fun clearError() {
+        _uiState.update { it.copy(errorMessage = null) }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
     }
 }

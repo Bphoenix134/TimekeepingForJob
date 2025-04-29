@@ -17,7 +17,11 @@ class CalendarRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getSelectedDays(year: Int, month: Int): List<Int> {
-        return dao.getSelectedDaysForMonth(month, year).map { it.day }
+        return try {
+            dao.getSelectedDaysForMonth(month, year).map { it.day }
+        } catch (e: Exception) {
+            emptyList()
+        }
     }
 
     override suspend fun saveSelectedDay(day: Int, month: Int, year: Int) {
@@ -25,6 +29,26 @@ class CalendarRepositoryImpl @Inject constructor(
     }
 
     override suspend fun removeSelectedDay(day: Int, month: Int, year: Int) {
-        dao.delete(SelectedDayEntity(day = day, month = month, year = year))
+        val selectedDay = dao.getSelectedDay(day, month, year)
+        if (selectedDay != null) {
+            dao.delete(selectedDay)
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override suspend fun initializeWeekendDays(year: Int, month: Int) {
+        val yearMonth = YearMonth.of(year, month)
+        val existingDays = dao.getSelectedDaysForMonth(month, year).map { it.day }.toSet()
+
+        val daysInMonth = yearMonth.lengthOfMonth()
+        val weekendDays = (1..daysInMonth).filter { day ->
+            yearMonth.atDay(day).dayOfWeek.value >= 6 // Saturday or Sunday
+        }
+
+        for (day in weekendDays) {
+            if (!existingDays.contains(day)) {
+                dao.insert(SelectedDayEntity(day = day, month = month, year = year))
+            }
+        }
     }
 }

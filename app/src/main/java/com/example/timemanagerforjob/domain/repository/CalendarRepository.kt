@@ -7,4 +7,5 @@ interface CalendarRepository {
     suspend fun getSelectedDays(year: Int, month: Int): List<Int>
     suspend fun saveSelectedDay(day: Int, month: Int, year: Int)
     suspend fun removeSelectedDay(day: Int, month: Int, year: Int)
+    suspend fun initializeWeekendDays(year: Int, month: Int)
 }
