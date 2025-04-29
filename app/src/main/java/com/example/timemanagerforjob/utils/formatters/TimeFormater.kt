@@ -1,4 +1,4 @@
-package com.example.timemanagerforjob.util
+package com.example.timemanagerforjob.utils.formatters
 
 import android.annotation.SuppressLint
 

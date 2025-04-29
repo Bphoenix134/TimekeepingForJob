@@ -6,18 +6,22 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.timemanagerforjob.presentation.work.WorkScreen
 import com.example.timemanagerforjob.presentation.statistics.StatisticsScreen
+import com.example.timemanagerforjob.presentation.work.WorkScreenContainer
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AppNavigation(navController: NavHostController) {
     NavHost(navController = navController, startDestination = "calendar") {
         composable("calendar") {
-            WorkScreen()
+            WorkScreenContainer(
+                onNavigateToStatistics = { navController.navigate("statistics") }
+            )
         }
         composable("statistics") {
-            StatisticsScreen()
+            StatisticsScreen(
+                onNavigateToCalendar = { navController.navigate("calendar") }
+            )
         }
     }
 }

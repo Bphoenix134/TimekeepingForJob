@@ -14,4 +14,7 @@ interface TimeReportDao {
 
     @Query("SELECT * FROM time_reports WHERE date = :date LIMIT 1")
     suspend fun getTimeReportByDate(date: LocalDate): TimeReportEntity?
+
+    @Query("SELECT * FROM time_reports WHERE strftime('%Y-%m', date) = :year || '-' || printf('%02d', :month)")
+    suspend fun getTimeReportsForMonth(year: Int, month: Int): List<TimeReportEntity>
 }

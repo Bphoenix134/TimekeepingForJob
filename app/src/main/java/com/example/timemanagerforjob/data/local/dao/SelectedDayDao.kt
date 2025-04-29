@@ -13,4 +13,7 @@ interface SelectedDayDao {
 
     @Delete
     suspend fun delete(day: SelectedDayEntity)
+
+    @Query("SELECT * FROM selected_days WHERE day = :day AND month = :month AND year = :year LIMIT 1")
+    suspend fun getSelectedDay(day: Int, month: Int, year: Int): SelectedDayEntity?
 }
