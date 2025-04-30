@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="8dp"
+    android:background="@drawable/widget_background">
+
+    <TextView
+        android:id="@+id/widget_session_status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Сеанс не активен"
+        android:textSize="16sp"
+        android:textColor="@android:color/black"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/widget_worked_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="00:00:00"
+        android:textSize="20sp"
+        android:textColor="@android:color/black"
+        android:visibility="gone" />
+
+    <Button
+        android:id="@+id/widget_start_stop_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:backgroundTint="@color/button_start"
+        android:text="Начать работу"
+        android:textSize="16sp"
+        android:textColor="@android:color/white"
+        android:padding="8dp"
+        android:layout_marginHorizontal="4dp" />
+
+    <Button
+        android:id="@+id/widget_pause_resume_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:backgroundTint="@color/button_pause_resume"
+        android:text="Пауза"
+        android:textSize="16sp"
+        android:textColor="@android:color/white"
+        android:padding="8dp"
+        android:layout_marginHorizontal="4dp"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/widget_total_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Отработано сегодня: 00:00:00"
+        android:textSize="14sp"
+        android:textColor="@android:color/black"
+        android:visibility="gone" />
+
+</LinearLayout>

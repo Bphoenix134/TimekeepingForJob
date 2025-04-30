@@ -1,5 +1,6 @@
 package com.example.timemanagerforjob.data.local.dao
 
+import android.util.Log
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -11,6 +12,9 @@ import java.time.LocalDate
 interface TimeReportDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTimeReport(report: TimeReportEntity)
+
+    @Query("UPDATE time_reports SET startTime = :startTime, endTime = :endTime, workTime = :workTime, pauses = :pauses WHERE date = :date")
+    suspend fun updateTimeReport(date: LocalDate, startTime: Long, endTime: Long?, workTime: Long, pauses: String)
 
     @Query("SELECT * FROM time_reports WHERE date = :date LIMIT 1")
     suspend fun getTimeReportByDate(date: LocalDate): TimeReportEntity?

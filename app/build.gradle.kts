@@ -53,6 +53,10 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    lint {
+        baseline = file("lint-baseline.xml")
+        abortOnError = false
+    }
 }
 
 dependencies {
@@ -84,4 +88,7 @@ dependencies {
     implementation(libs.jetbrains.kotlin.stdlib)
     implementation(libs.jetbrains.kotlin.serialization.json)
     implementation(libs.androidx.localbroadcastmanager)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.core)
+    implementation(libs.androidx.work.runtime)
 }

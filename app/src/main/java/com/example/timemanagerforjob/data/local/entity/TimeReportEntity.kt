@@ -6,8 +6,7 @@ import java.time.LocalDate
 
 @Entity(tableName = "time_reports")
 data class TimeReportEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+    @PrimaryKey
     val date: LocalDate,
     val startTime: Long,
     val endTime: Long?,

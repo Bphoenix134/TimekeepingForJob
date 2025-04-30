@@ -47,7 +47,6 @@ class WorkViewModel @Inject constructor(
         initializeFirstLaunch()
         loadMonthData()
 
-        // Подписываемся на события через SharedFlow
         viewModelScope.launch {
             SessionEventBus.sessionEvents.collect { event ->
                 when (event) {
@@ -172,13 +171,15 @@ class WorkViewModel @Inject constructor(
     @SuppressLint("NewApi")
     fun startTimeReport() {
         viewModelScope.launch {
+            Log.d("WorkViewModel", "Attempting to start session for date: ${LocalDate.now()}")
             when (val result = manageTimeReportUseCase.startSession(LocalDate.now())) {
                 is Result.Success -> {
+                    Log.d("WorkViewModel", "Session started: ${result.value}")
                     _uiState.update {
                         it.copy(
                             sessionState = result.value,
                             reportState = null,
-                            isPaused = false,
+                            isPaused = result.value.pauses.any { it.second == null },
                             workedTime = result.value.calculateWorkTime(),
                             errorMessage = null
                         )
@@ -186,9 +187,15 @@ class WorkViewModel @Inject constructor(
                     WorkSessionService.startService(context, result.value)
                 }
                 is Result.Failure -> {
+                    Log.e("WorkViewModel", "Failed to start session: ${result.exception}")
+                    val errorMessage = when (result.exception.message) {
+                        "Active session already exists for this date" -> "Сеанс уже активен. Завершите текущий сеанс."
+                        "Session already completed for this date" -> "Сеанс за ${LocalDate.now()} уже завершён. Вы можете начать новый сеанс завтра."
+                        else -> "Не удалось начать сеанс: ${result.exception.message}"
+                    }
                     _uiState.update {
                         it.copy(
-                            errorMessage = result.exception.message ?: "Failed to start session"
+                            errorMessage = errorMessage
                         )
                     }
                 }

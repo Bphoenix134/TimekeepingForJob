@@ -4,10 +4,13 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.app.Service
+import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -18,6 +21,7 @@ import com.example.timemanagerforjob.utils.notifications.NotificationHelper
 import com.example.timemanagerforjob.domain.model.Result
 import com.example.timemanagerforjob.domain.model.WorkSession
 import com.example.timemanagerforjob.domain.usecases.ManageTimeReportUseCase
+import com.example.timemanagerforjob.widget.WorkSessionWidget
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -41,6 +45,7 @@ class WorkSessionService : Service() {
         super.onCreate()
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
@@ -103,12 +108,20 @@ class WorkSessionService : Service() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun stopSession() {
         session?.let { currentSession ->
             CoroutineScope(Dispatchers.IO).launch {
                 val result = manageTimeReportUseCase.stopSession(currentSession)
                 if (result is Result.Success) {
+                    Log.d("WorkSessionService", "Session stopped: ${result.value}")
                     SessionEventBus.emitEvent(SessionEvent.SessionStopped(result.value))
+                    val intent = Intent(this@WorkSessionService, WorkSessionWidget::class.java).apply {
+                        action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                    }
+                    sendBroadcast(intent)
+                } else {
+                    Log.e("WorkSessionService", "Failed to stop session: $result")
                 }
             }
         }
@@ -117,8 +130,13 @@ class WorkSessionService : Service() {
         isPaused = false
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     @androidx.annotation.RequiresPermission(android.Manifest.permission.POST_NOTIFICATIONS)
     private fun pauseSession() {
+        if (session?.endTime != null) {
+            Log.w("WorkSessionService", "pauseSession: session already completed — skipping")
+            return
+        }
         session?.let { currentSession ->
             CoroutineScope(Dispatchers.IO).launch {
                 val result = manageTimeReportUseCase.pauseSession(currentSession)
@@ -127,13 +145,22 @@ class WorkSessionService : Service() {
                     isPaused = true
                     updateNotification(result.value.calculateWorkTime())
                     SessionEventBus.emitEvent(SessionEvent.SessionPausedResumed(result.value, true))
+                    val intent = Intent(this@WorkSessionService, WorkSessionWidget::class.java).apply {
+                        action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                    }
+                    sendBroadcast(intent)
                 }
             }
         }
         timerJob?.cancel()
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun resumeSession() {
+        if (session?.endTime != null) {
+            Log.w("WorkSessionService", "resumeSession: session already completed — skipping")
+            return
+        }
         session?.let { currentSession ->
             CoroutineScope(Dispatchers.IO).launch {
                 val result = manageTimeReportUseCase.resumeSession(currentSession)
@@ -142,6 +169,10 @@ class WorkSessionService : Service() {
                     isPaused = false
                     startTimer()
                     SessionEventBus.emitEvent(SessionEvent.SessionPausedResumed(result.value, false))
+                    val intent = Intent(this@WorkSessionService, WorkSessionWidget::class.java).apply {
+                        action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                    }
+                    sendBroadcast(intent)
                 }
             }
         }
