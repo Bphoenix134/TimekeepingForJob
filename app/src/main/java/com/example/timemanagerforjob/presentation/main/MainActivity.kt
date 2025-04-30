@@ -1,13 +1,18 @@
 package com.example.timemanagerforjob.presentation.main
 
-import android.Manifest
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
+import androidx.compose.runtime.Composable
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.timemanagerforjob.presentation.navigation.AppNavigation
+import com.example.timemanagerforjob.presentation.navigation.BottomNavigationBar
+import com.example.timemanagerforjob.presentation.settings.SettingsScreen
+import com.example.timemanagerforjob.presentation.statistics.StatisticsScreen
+import com.example.timemanagerforjob.presentation.work.WorkScreenContainer
 import com.example.timemanagerforjob.utils.notifications.NotificationHelper
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -19,15 +24,47 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         NotificationHelper.createNotificationChannel(this)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 100)
+            requestPermissions(
+                arrayOf(
+                    android.Manifest.permission.POST_NOTIFICATIONS,
+                    android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+                ),
+                100
+            )
+        } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            requestPermissions(
+                arrayOf(android.Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                100
+            )
         }
         setContent {
             val navController = rememberNavController()
             AppNavigation(navController)
-            // If WorkScreenContainer is used directly, provide onNavigateToStatistics
-            // WorkScreenContainer(
-            //     onNavigateToStatistics = { navController.navigate("statistics") }
-            // )
+        }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun AppNavigation(navController: androidx.navigation.NavHostController) {
+    NavHost(navController = navController, startDestination = "calendar") {
+        composable("calendar") {
+            WorkScreenContainer(
+                onNavigateToStatistics = { navController.navigate("statistics") },
+                onNavigateToSettings = { navController.navigate("settings") }
+            )
+        }
+        composable("statistics") {
+            StatisticsScreen(
+                onNavigateToCalendar = { navController.navigate("calendar") },
+                onNavigateToSettings = { navController.navigate("settings") }
+            )
+        }
+        composable("settings") {
+            SettingsScreen(
+                onNavigateToCalendar = { navController.navigate("calendar") },
+                onNavigateToStatistics = { navController.navigate("statistics") }
+            )
         }
     }
 }

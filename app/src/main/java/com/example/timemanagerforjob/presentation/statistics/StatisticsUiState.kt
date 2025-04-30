@@ -4,6 +4,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import com.example.timemanagerforjob.domain.model.TimeReport
 import java.time.LocalDate
+import java.time.LocalDate.now
 import java.time.YearMonth
 
 enum class StatisticsMode {
@@ -11,10 +12,10 @@ enum class StatisticsMode {
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
-data class StatisticsUiState constructor(
+data class StatisticsUiState(
     val mode: StatisticsMode = StatisticsMode.DAY,
-    val currentDate: LocalDate = LocalDate.now(),
-    val currentWeek: Pair<LocalDate, LocalDate> = LocalDate.now().run {
+    val currentDate: LocalDate = now(),
+    val currentWeek: Pair<LocalDate, LocalDate> = now().run {
         val start = this.minusDays(this.dayOfWeek.value.toLong() - 1)
         val end = start.plusDays(6)
         Pair(start, end)
@@ -22,7 +23,9 @@ data class StatisticsUiState constructor(
     val currentMonth: YearMonth = YearMonth.now(),
     val statisticsData: StatisticsData? = null,
     val isLoading: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val exportResult: String? = null,
+    val exportError: String? = null
 )
 
 sealed interface StatisticsData
@@ -39,7 +42,7 @@ data class WeekStatisticsData(
     val totalWorkTime: Long,
     val averageWorkTime: Long,
     val totalPauseTime: Long,
-    val weekendsInWeek: Int // Added
+    val weekendsInWeek: Int
 ) : StatisticsData
 
 data class MonthStatisticsData(
@@ -49,5 +52,6 @@ data class MonthStatisticsData(
     val totalPauseTime: Long,
     val longestDay: TimeReport?,
     val shortestDay: TimeReport?,
-    val weekendsInMonth: Int // Added
+    val weekendsInMonth: Int,
+    val totalEarnings: Double
 ) : StatisticsData

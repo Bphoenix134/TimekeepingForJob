@@ -1,24 +1,43 @@
 package com.example.timemanagerforjob.presentation.statistics
 
+import android.Manifest
+import android.content.Context
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -26,33 +45,53 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.timemanagerforjob.utils.formatters.TimeFormatter
-import java.time.format.DateTimeFormatter
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import com.example.timemanagerforjob.presentation.navigation.BottomNavigationBar
-
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
+import java.time.format.DateTimeFormatter
 
 @RequiresApi(Build.VERSION_CODES.O)
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun StatisticsScreen(
     onNavigateToCalendar: () -> Unit,
+    onNavigateToSettings: () -> Unit,
     viewModel: StatisticsViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState = viewModel.uiState.collectAsState().value
     val currentMode = uiState.mode
     val currentDate = uiState.currentDate
     val currentWeek = uiState.currentWeek
     val currentMonth = uiState.currentMonth
     val statisticsData = uiState.statisticsData
+    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+
+    // Permission handling for WRITE_EXTERNAL_STORAGE
+    val storagePermissionState = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+        rememberPermissionState(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+    } else {
+        null
+    }
+
+    LaunchedEffect(uiState.exportResult, uiState.exportError) {
+        uiState.exportResult?.let {
+            snackbarHostState.showSnackbar("Экспорт успешен: $it")
+        }
+        uiState.exportError?.let {
+            snackbarHostState.showSnackbar("Ошибка экспорта: $it")
+        }
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             BottomNavigationBar(
                 currentRoute = "statistics",
                 onNavigateToCalendar = onNavigateToCalendar,
-                onNavigateToStatistics = { /* Already on statistics */ }
+                onNavigateToStatistics = { /* Already on statistics */ },
+                onNavigateToSettings = onNavigateToSettings
             )
         }
     ) { padding ->
@@ -63,16 +102,37 @@ fun StatisticsScreen(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Add "Statistics" header
-            Text(
-                text = "Статистика",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
+            // Header with export button
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
-                textAlign = TextAlign.Center
-            )
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Статистика",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+                IconButton(
+                    onClick = {
+                        if (storagePermissionState?.status?.isGranted == false) {
+                            storagePermissionState.launchPermissionRequest()
+                        } else {
+                            viewModel.exportToExcel(context) // Use captured context
+                        }
+                    },
+                    modifier = Modifier.semantics { contentDescription = "Export to Excel" }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = "Export to Excel",
+                        tint = Color.Black
+                    )
+                }
+            }
 
             // Mode selection buttons
             Row(
@@ -111,7 +171,7 @@ fun StatisticsScreen(
                     modifier = Modifier.semantics { contentDescription = "Previous Period" }
                 ) {
                     Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Previous Period"
                     )
                 }
@@ -121,6 +181,7 @@ fun StatisticsScreen(
                         StatisticsMode.DAY -> currentDate.format(DateTimeFormatter.ofPattern("dd MMMM yyyy"))
                         StatisticsMode.WEEK -> "${currentWeek.first.format(DateTimeFormatter.ofPattern("dd MMM"))} - ${currentWeek.second.format(DateTimeFormatter.ofPattern("dd MMM yyyy"))}"
                         StatisticsMode.MONTH -> currentMonth.format(DateTimeFormatter.ofPattern("MMMM yyyy"))
+                        else -> ""
                     },
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
@@ -131,7 +192,7 @@ fun StatisticsScreen(
                     modifier = Modifier.semantics { contentDescription = "Next Period" }
                 ) {
                     Icon(
-                        Icons.AutoMirrored.Filled.ArrowForward,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                         contentDescription = "Next Period"
                     )
                 }
@@ -183,10 +244,10 @@ private fun DayStatistics(data: DayStatisticsData?) {
             )
         } else {
             val report = data.report
-            StatisticItem("Отработано", TimeFormatter.formatTime(report.workTime))
+            StatisticItem("Отработано", com.example.timemanagerforjob.utils.formatters.TimeFormatter.formatTime(report.workTime))
             StatisticItem("Начало работы", data.startTime)
             StatisticItem("Конец работы", data.endTime ?: "Сеанс активен")
-            StatisticItem("Перерывы", "${report.pauses.size} (${TimeFormatter.formatTimeForStatistics(data.totalPauseTime)})")
+            StatisticItem("Перерывы", "${report.pauses.size} (${com.example.timemanagerforjob.utils.formatters.TimeFormatter.formatTimeForStatistics(data.totalPauseTime)})")
         }
     }
 }
@@ -208,10 +269,10 @@ private fun WeekStatistics(data: WeekStatisticsData?) {
                 modifier = Modifier.fillMaxWidth()
             )
         } else {
-            StatisticItem("Общее время", TimeFormatter.formatTimeForStatistics(data.totalWorkTime))
+            StatisticItem("Общее время", com.example.timemanagerforjob.utils.formatters.TimeFormatter.formatTimeForStatistics(data.totalWorkTime))
             StatisticItem("Рабочих дней", "${data.reports.size}")
-            StatisticItem("Среднее время в день", TimeFormatter.formatTimeForStatistics(data.averageWorkTime))
-            StatisticItem("Общее время перерывов", TimeFormatter.formatTimeForStatistics(data.totalPauseTime))
+            StatisticItem("Среднее время в день", com.example.timemanagerforjob.utils.formatters.TimeFormatter.formatTimeForStatistics(data.averageWorkTime))
+            StatisticItem("Общее время перерывов", com.example.timemanagerforjob.utils.formatters.TimeFormatter.formatTimeForStatistics(data.totalPauseTime))
             StatisticItem("Количество выходных", "${data.weekendsInWeek}")
 
             // Display daily breakdown
@@ -230,8 +291,7 @@ private fun WeekStatistics(data: WeekStatisticsData?) {
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(data.reports.size) { index ->
-                    val report = data.reports[index]
+                items(data.reports, key = { it.date.toString() }) { report ->
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -246,7 +306,7 @@ private fun WeekStatistics(data: WeekStatisticsData?) {
                                 fontWeight = FontWeight.Medium
                             )
                             Text(
-                                text = TimeFormatter.formatTime(report.workTime),
+                                text = com.example.timemanagerforjob.utils.formatters.TimeFormatter.formatTime(report.workTime),
                                 fontSize = 14.sp
                             )
                         }
@@ -274,17 +334,18 @@ private fun MonthStatistics(data: MonthStatisticsData?) {
                 modifier = Modifier.fillMaxWidth()
             )
         } else {
-            StatisticItem("Общее время", TimeFormatter.formatTimeForStatistics(data.totalWorkTime))
+            StatisticItem("Общее время", com.example.timemanagerforjob.utils.formatters.TimeFormatter.formatTimeForStatistics(data.totalWorkTime))
             StatisticItem("Рабочих дней", "${data.reports.size}")
-            StatisticItem("Среднее время в день", TimeFormatter.formatTimeForStatistics(data.averageWorkTime))
-            StatisticItem("Общее время перерывов", TimeFormatter.formatTimeForStatistics(data.totalPauseTime))
+            StatisticItem("Среднее время в день", com.example.timemanagerforjob.utils.formatters.TimeFormatter.formatTimeForStatistics(data.averageWorkTime))
+            StatisticItem("Общее время перерывов", com.example.timemanagerforjob.utils.formatters.TimeFormatter.formatTimeForStatistics(data.totalPauseTime))
             StatisticItem("Самый длинный день", data.longestDay?.let {
-                "${it.date.format(DateTimeFormatter.ofPattern("dd MMM"))}: ${TimeFormatter.formatTimeForStatistics(it.workTime)}"
+                "${it.date.format(DateTimeFormatter.ofPattern("dd MMM"))}: ${com.example.timemanagerforjob.utils.formatters.TimeFormatter.formatTimeForStatistics(it.workTime)}"
             } ?: "Нет данных")
             StatisticItem("Самый короткий день", data.shortestDay?.let {
-                "${it.date.format(DateTimeFormatter.ofPattern("dd MMM"))}: ${TimeFormatter.formatTimeForStatistics(it.workTime)}"
+                "${it.date.format(DateTimeFormatter.ofPattern("dd MMM"))}: ${com.example.timemanagerforjob.utils.formatters.TimeFormatter.formatTimeForStatistics(it.workTime)}"
             } ?: "Нет данных")
             StatisticItem("Количество выходных", "${data.weekendsInMonth}")
+            StatisticItem("Потенциальный заработок", "${String.format("%.2f", data.totalEarnings)} рублей")
         }
     }
 }

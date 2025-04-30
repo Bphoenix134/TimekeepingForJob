@@ -23,7 +23,7 @@ class TimeReportRepositoryImpl @Inject constructor(
         Log.d("TimeReportRepository", "Saving report: $report")
         val existingReport = dao.getTimeReportByDate(report.date)
         if (existingReport != null) {
-            // Обновляем существующую запись
+
             dao.updateTimeReport(
                 date = report.date,
                 startTime = report.startTime,
@@ -33,7 +33,6 @@ class TimeReportRepositoryImpl @Inject constructor(
             )
             Log.d("TimeReportRepository", "Updated existing report for ${report.date}")
         } else {
-            // Вставляем новую запись
             dao.insertTimeReport(report.toEntity())
             Log.d("TimeReportRepository", "Inserted new report for ${report.date}")
         }

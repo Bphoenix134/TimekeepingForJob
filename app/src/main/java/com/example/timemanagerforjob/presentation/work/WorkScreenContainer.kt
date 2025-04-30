@@ -10,12 +10,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 @Composable
 fun WorkScreenContainer(
     viewModel: WorkViewModel = hiltViewModel(),
-    onNavigateToStatistics: () -> Unit
+    onNavigateToStatistics: () -> Unit,
+    onNavigateToSettings: () -> Unit
 ) {
     val uiState = viewModel.uiState.collectAsState().value
 
     WorkScreen(
         viewModel = viewModel,
-        onNavigateToStatistics = onNavigateToStatistics
+        onNavigateToStatistics = onNavigateToStatistics,
+        onNavigateToSettings = onNavigateToSettings
     )
 }
