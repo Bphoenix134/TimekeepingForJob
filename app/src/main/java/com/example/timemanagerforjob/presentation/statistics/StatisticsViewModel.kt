@@ -6,10 +6,11 @@ import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.timemanagerforjob.domain.model.Result
-import com.example.timemanagerforjob.domain.model.TimeReport
 import com.example.timemanagerforjob.domain.repository.CalendarRepository
 import com.example.timemanagerforjob.domain.repository.TimeReportRepository
+import com.example.timemanagerforjob.utils.ExcelExportUtil
 import com.example.timemanagerforjob.utils.formatters.TimeFormatter
+import com.example.timemanagerforjob.utils.preferences.AppPreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,7 +23,8 @@ import javax.inject.Inject
 @HiltViewModel
 class StatisticsViewModel @Inject constructor(
     private val timeReportRepository: TimeReportRepository,
-    private val calendarRepository: CalendarRepository
+    private val calendarRepository: CalendarRepository,
+    private val appPreferences: AppPreferences
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(StatisticsUiState())
@@ -67,6 +69,38 @@ class StatisticsViewModel @Inject constructor(
             }
         }
         loadStatistics()
+    }
+
+    fun exportToExcel(context: android.content.Context) {
+        viewModelScope.launch {
+            val month = _uiState.value.currentMonth
+            val result = timeReportRepository.getReportsByMonth(month)
+            val selectedDays = calendarRepository.getSelectedDays(month.year, month.monthValue)
+            when (result) {
+                is Result.Success -> {
+                    val exportResult = ExcelExportUtil.exportMonthlyStatistics(
+                        context,
+                        result.value,
+                        month,
+                        selectedDays
+                    )
+                    _uiState.update {
+                        it.copy(
+                            exportResult = exportResult.getOrNull(),
+                            exportError = if (exportResult is Result.Failure) exportResult.exception.message else null
+                        )
+                    }
+                }
+                is Result.Failure -> {
+                    _uiState.update {
+                        it.copy(
+                            exportResult = null,
+                            exportError = result.exception.message ?: "Failed to load data for export"
+                        )
+                    }
+                }
+            }
+        }
     }
 
     private fun loadStatistics() {
@@ -114,7 +148,7 @@ class StatisticsViewModel @Inject constructor(
 
     private suspend fun loadWeekStatistics() {
         val (start, end) = _uiState.value.currentWeek
-        val reports = mutableListOf<TimeReport>()
+        val reports = mutableListOf<com.example.timemanagerforjob.domain.model.TimeReport>()
         var currentDate = start
         while (!currentDate.isAfter(end)) {
             when (val result = timeReportRepository.getReportByDate(currentDate)) {
@@ -164,6 +198,7 @@ class StatisticsViewModel @Inject constructor(
                 val reports = result.value
                 val selectedDays = calendarRepository.getSelectedDays(month.year, month.monthValue)
                 val weekendsInMonth = selectedDays.size
+                val earnings = calculateMonthlyEarnings(reports, selectedDays)
                 val data = if (reports.isNotEmpty()) {
                     MonthStatisticsData(
                         reports = reports,
@@ -177,7 +212,8 @@ class StatisticsViewModel @Inject constructor(
                         },
                         longestDay = reports.maxByOrNull { it.workTime },
                         shortestDay = reports.minByOrNull { it.workTime },
-                        weekendsInMonth = weekendsInMonth
+                        weekendsInMonth = weekendsInMonth,
+                        totalEarnings = earnings
                     )
                 } else {
                     MonthStatisticsData(
@@ -187,7 +223,8 @@ class StatisticsViewModel @Inject constructor(
                         totalPauseTime = 0L,
                         longestDay = null,
                         shortestDay = null,
-                        weekendsInMonth = weekendsInMonth
+                        weekendsInMonth = weekendsInMonth,
+                        totalEarnings = 0.0
                     )
                 }
                 _uiState.update { it.copy(statisticsData = data, errorMessage = null) }
@@ -200,6 +237,16 @@ class StatisticsViewModel @Inject constructor(
                     )
                 }
             }
+        }
+    }
+
+    private fun calculateMonthlyEarnings(reports: List<com.example.timemanagerforjob.domain.model.TimeReport>, selectedDays: List<Int>): Double {
+        val weekdayRate = appPreferences.getWeekdayHourlyRate().toDouble()
+        val weekendRate = appPreferences.getWeekendHourlyRate().toDouble()
+        return reports.sumOf { report ->
+            val hours = report.workTime / (1000.0 * 60 * 60) // Convert milliseconds to hours
+            val isWeekend = selectedDays.contains(report.date.dayOfMonth)
+            hours * if (isWeekend) weekendRate else weekdayRate
         }
     }
 

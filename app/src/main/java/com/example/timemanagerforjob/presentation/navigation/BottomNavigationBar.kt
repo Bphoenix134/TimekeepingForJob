@@ -12,19 +12,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
 
-data class BottomNavItem(val label: String, val icon: ImageVector, val route: String)
+data class BottomNavItem(val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector, val route: String)
 
 @Composable
 fun BottomNavigationBar(
     currentRoute: String,
     onNavigateToCalendar: () -> Unit,
-    onNavigateToStatistics: () -> Unit
+    onNavigateToStatistics: () -> Unit,
+    onNavigateToSettings: () -> Unit = {}
 ) {
     val items = listOf(
         BottomNavItem("Календарь", Icons.Filled.DateRange, "calendar"),
-        BottomNavItem("Статистика", Icons.Filled.Info, "statistics")
+        BottomNavItem("Статистика", Icons.Filled.Info, "statistics"),
+        BottomNavItem("Настройки", Icons.Filled.Settings, "settings")
     )
 
     NavigationBar(
@@ -37,6 +40,7 @@ fun BottomNavigationBar(
                     when (item.route) {
                         "calendar" -> onNavigateToCalendar()
                         "statistics" -> onNavigateToStatistics()
+                        "settings" -> onNavigateToSettings()
                     }
                 },
                 icon = {

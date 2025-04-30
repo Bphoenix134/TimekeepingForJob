@@ -1,7 +1,7 @@
 package com.example.timemanagerforjob.utils.preferences
 
 import android.content.Context
-import androidx.core.content.edit
+import android.content.SharedPreferences
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -25,5 +25,27 @@ class AppPreferences @Inject constructor(
 
     fun setYearInitialized(year: Int) {
         prefs.edit { putBoolean("year_initialized_$year", true) }
+    }
+
+    fun getWeekdayHourlyRate(): Float {
+        return prefs.getFloat("weekday_hourly_rate", 20.0f)
+    }
+
+    fun setWeekdayHourlyRate(rate: Float) {
+        prefs.edit { putFloat("weekday_hourly_rate", rate) }
+    }
+
+    fun getWeekendHourlyRate(): Float {
+        return prefs.getFloat("weekend_hourly_rate", 30.0f)
+    }
+
+    fun setWeekendHourlyRate(rate: Float) {
+        prefs.edit { putFloat("weekend_hourly_rate", rate) }
+    }
+
+    private inline fun SharedPreferences.edit(action: SharedPreferences.Editor.() -> Unit) {
+        val editor = edit()
+        action(editor)
+        editor.apply()
     }
 }

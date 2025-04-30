@@ -91,4 +91,5 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core)
     implementation(libs.androidx.work.runtime)
+    implementation(libs.jexcelapi)
 }
