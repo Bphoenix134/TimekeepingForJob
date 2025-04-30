@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.timemanagerforjob.presentation.navigation.BottomNavigationBar
-import com.example.timemanagerforjob.utils.formatters.formatTime
+import com.example.timemanagerforjob.utils.formatters.TimeFormatter.formatTime
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 

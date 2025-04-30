@@ -1,11 +1,12 @@
 package com.example.timemanagerforjob.data.local
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.room.TypeConverter
 import kotlinx.serialization.encodeToString
-import java.time.LocalDate
 import kotlinx.serialization.json.Json
+import java.time.LocalDate
 
 class Converters {
 
@@ -20,6 +21,7 @@ class Converters {
         return try {
             dateString?.let { LocalDate.parse(it) }
         } catch (e: Exception) {
+            Log.e("Converters", "Error parsing LocalDate: ${e.message}", e)
             null
         }
     }
@@ -34,6 +36,7 @@ class Converters {
         return try {
             Json.decodeFromString(pausesJson)
         } catch (e: Exception) {
+            Log.e("Converters", "Error parsing pauses: ${e.message}", e)
             emptyList()
         }
     }

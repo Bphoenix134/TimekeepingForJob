@@ -1,6 +1,7 @@
 package com.example.timemanagerforjob.domain.usecases
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import com.example.timemanagerforjob.domain.model.TimeReport
 import com.example.timemanagerforjob.domain.model.WorkSession
@@ -9,25 +10,19 @@ import com.example.timemanagerforjob.domain.model.Result
 import java.time.LocalDate
 import javax.inject.Inject
 
+
 class ManageTimeReportUseCase @Inject constructor(
     private val repository: TimeReportRepository
 ) {
     @RequiresApi(Build.VERSION_CODES.O)
     suspend fun startSession(date: LocalDate): Result<WorkSession> {
         val existingReport = repository.getReportByDate(date).getOrNull()
-        if (existingReport?.endTime != null) {
-            return Result.Failure(IllegalStateException("Session already completed for this date"))
-        }
         if (existingReport != null) {
-            return Result.Success(
-                WorkSession(
-                    date = existingReport.date,
-                    startTime = existingReport.startTime,
-                    endTime = existingReport.endTime,
-                    isWeekend = existingReport.date.dayOfWeek.value >= 6,
-                    pauses = existingReport.pauses
-                )
-            )
+            return if (existingReport.endTime == null) {
+                Result.Failure(IllegalStateException("Active session already exists for this date"))
+            } else {
+                Result.Failure(IllegalStateException("Session already completed for this date"))
+            }
         }
         val session = WorkSession.create(date, System.currentTimeMillis())
         val report = session.toTimeReport()
@@ -35,6 +30,7 @@ class ManageTimeReportUseCase @Inject constructor(
         return Result.Success(session)
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     suspend fun stopSession(session: WorkSession): Result<TimeReport> {
         if (session.endTime != null) {
             return Result.Failure(IllegalStateException("Session already stopped"))
@@ -45,6 +41,7 @@ class ManageTimeReportUseCase @Inject constructor(
         return Result.Success(report)
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     suspend fun pauseSession(session: WorkSession): Result<WorkSession> {
         if (session.endTime != null) {
             return Result.Failure(IllegalStateException("Cannot pause a stopped session"))
@@ -59,6 +56,7 @@ class ManageTimeReportUseCase @Inject constructor(
         return Result.Success(updatedSession)
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     suspend fun resumeSession(session: WorkSession): Result<WorkSession> {
         if (session.endTime != null) {
             return Result.Failure(IllegalStateException("Cannot resume a stopped session"))
@@ -76,14 +74,21 @@ class ManageTimeReportUseCase @Inject constructor(
     fun calculateCurrentWorkTime(session: WorkSession): Long {
         return session.calculateWorkTime()
     }
+
+    suspend fun getReportByDate(date: LocalDate): Result<TimeReport> {
+        return repository.getReportByDate(date)
+    }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 private fun WorkSession.toTimeReport(endTime: Long? = this.endTime): TimeReport {
+    val calculatedWorkTime = calculateWorkTime(endTime ?: System.currentTimeMillis())
+    Log.d("WorkSessionDebug", "base=${(endTime ?: System.currentTimeMillis()) - startTime}, pauseTime=${pauses.sumOf { (it.second ?: System.currentTimeMillis()) - it.first }}, result=$calculatedWorkTime")
     return TimeReport(
         date = date,
         startTime = startTime,
         endTime = endTime,
-        workTime = calculateWorkTime(endTime ?: System.currentTimeMillis()),
+        workTime = calculatedWorkTime,
         pauses = pauses
     )
 }

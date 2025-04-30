@@ -9,7 +9,7 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.example.timemanagerforjob.R
-import com.example.timemanagerforjob.utils.formatters.formatTime
+import com.example.timemanagerforjob.utils.formatters.TimeFormatter.formatTime
 
 object NotificationHelper {
     private const val CHANNEL_ID = "work_session_channel"
