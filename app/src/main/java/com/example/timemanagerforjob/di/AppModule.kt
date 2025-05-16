@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.room.Room
+import com.example.timemanagerforjob.auth.AuthRepository
 import com.example.timemanagerforjob.data.local.dao.SelectedDayDao
 import com.example.timemanagerforjob.data.local.dao.TimeReportDao
 import com.example.timemanagerforjob.data.local.database.AppDatabase
@@ -21,12 +22,11 @@ import com.example.timemanagerforjob.utils.preferences.AppPreferences
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
-@Module
-@InstallIn(SingletonComponent::class)
-object AppModule {
+@Module @InstallIn(SingletonComponent::class) object AppModule {
 
     @Provides
     @Singleton
@@ -77,8 +77,8 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideAppPreferences(app: Application): AppPreferences {
-        return AppPreferences(app)
+    fun provideAppPreferences(@ApplicationContext context: Context): AppPreferences {
+        return AppPreferences(context)
     }
 
     @Provides
@@ -87,11 +87,18 @@ object AppModule {
         return app.applicationContext
     }
 
+    @Provides
+    @Singleton
+    fun provideAuthRepository(@ApplicationContext context: Context): AuthRepository {
+        return AuthRepository(context)
+    }
+
     @RequiresApi(Build.VERSION_CODES.O)
     @Provides
     @Singleton
     fun provideWorkViewModel(
         timeReportRepository: TimeReportRepository,
+        timeReportDao: TimeReportDao,
         calendarRepository: CalendarRepository,
         getMonthDataUseCase: GetMonthDataUseCase,
         manageTimeReportUseCase: ManageTimeReportUseCase,
@@ -100,6 +107,7 @@ object AppModule {
     ): WorkViewModel {
         return WorkViewModel(
             timeReportRepository,
+            timeReportDao,
             calendarRepository,
             getMonthDataUseCase,
             manageTimeReportUseCase,
@@ -123,8 +131,10 @@ object AppModule {
     @Provides
     @Singleton
     fun provideSettingsViewModel(
-        appPreferences: AppPreferences
+        appPreferences: AppPreferences,
+        authRepository: AuthRepository
     ): SettingsViewModel {
-        return SettingsViewModel(appPreferences)
+        return SettingsViewModel(appPreferences, authRepository)
     }
+
 }

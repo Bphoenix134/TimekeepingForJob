@@ -6,10 +6,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.timemanagerforjob.presentation.navigation.BottomNavigationBar
+import com.example.timemanagerforjob.auth.AuthScreen
+import com.example.timemanagerforjob.auth.AuthViewModel
 import com.example.timemanagerforjob.presentation.settings.SettingsScreen
 import com.example.timemanagerforjob.presentation.statistics.StatisticsScreen
 import com.example.timemanagerforjob.presentation.work.WorkScreenContainer
@@ -47,7 +50,18 @@ class MainActivity : ComponentActivity() {
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AppNavigation(navController: androidx.navigation.NavHostController) {
-    NavHost(navController = navController, startDestination = "calendar") {
+    val authViewModel: AuthViewModel = hiltViewModel()
+    val isAuthenticated = authViewModel.uiState.collectAsState().value.isAuthenticated
+
+    NavHost(
+        navController = navController,
+        startDestination = if (isAuthenticated) "calendar" else "auth"
+    ) {
+        composable("auth") {
+            AuthScreen(
+                onAuthenticated = { navController.navigate("calendar") { popUpTo("auth") { inclusive = true } } }
+            )
+        }
         composable("calendar") {
             WorkScreenContainer(
                 onNavigateToStatistics = { navController.navigate("statistics") },

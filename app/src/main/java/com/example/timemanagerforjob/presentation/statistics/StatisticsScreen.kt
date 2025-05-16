@@ -68,7 +68,6 @@ fun StatisticsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
-    // Permission handling for WRITE_EXTERNAL_STORAGE
     val storagePermissionState = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
         rememberPermissionState(Manifest.permission.WRITE_EXTERNAL_STORAGE)
     } else {
@@ -121,7 +120,7 @@ fun StatisticsScreen(
                         if (storagePermissionState?.status?.isGranted == false) {
                             storagePermissionState.launchPermissionRequest()
                         } else {
-                            viewModel.exportToExcel(context) // Use captured context
+                            viewModel.exportToExcel(context)
                         }
                     },
                     modifier = Modifier.semantics { contentDescription = "Export to Excel" }
@@ -134,7 +133,6 @@ fun StatisticsScreen(
                 }
             }
 
-            // Mode selection buttons
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
