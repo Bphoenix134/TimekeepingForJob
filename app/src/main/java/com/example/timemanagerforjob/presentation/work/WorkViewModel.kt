@@ -2,6 +2,7 @@ package com.example.timemanagerforjob.presentation.work
 
 import android.annotation.SuppressLint
 import android.content.Context
+import kotlinx.serialization.encodeToString
 import android.content.Intent
 import android.os.Build
 import android.util.Log
@@ -9,6 +10,8 @@ import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.timemanagerforjob.data.local.dao.TimeReportDao
+import com.example.timemanagerforjob.data.local.entity.TimeReportEntity
 import com.example.timemanagerforjob.domain.repository.CalendarRepository
 import com.example.timemanagerforjob.domain.repository.TimeReportRepository
 import com.example.timemanagerforjob.domain.usecases.GetMonthDataUseCase
@@ -18,21 +21,26 @@ import com.example.timemanagerforjob.domain.model.Result
 import com.example.timemanagerforjob.services.WorkSessionService
 import com.example.timemanagerforjob.utils.events.SessionEvent
 import com.example.timemanagerforjob.utils.events.SessionEventBus
+import com.example.timemanagerforjob.utils.formatters.TimeFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
 import java.time.LocalDate
 import java.time.YearMonth
+import java.time.ZoneOffset
 import javax.inject.Inject
+import kotlinx.serialization.json.Json
 
 @RequiresApi(Build.VERSION_CODES.O)
 @HiltViewModel
 @SuppressLint("StaticFieldLeak")
 class WorkViewModel @Inject constructor(
     private val timeReportRepository: TimeReportRepository,
+    private val timeReportDao: TimeReportDao,
     private val calendarRepository: CalendarRepository,
     private val getMonthDataUseCase: GetMonthDataUseCase,
     private val manageTimeReportUseCase: ManageTimeReportUseCase,
@@ -44,6 +52,7 @@ class WorkViewModel @Inject constructor(
     val uiState: StateFlow<WorkUiState> = _uiState.asStateFlow()
 
     init {
+        insertAprilReportsForTesting()
         initializeFirstLaunch()
         loadMonthData()
 
@@ -98,6 +107,14 @@ class WorkViewModel @Inject constructor(
                 }
                 appPreferences.setFirstLaunchCompleted()
             }
+        }
+    }
+
+    //Просто добавление насильно данных для отчёта
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun insertAprilReportsForTesting() {
+        viewModelScope.launch {
+            insertAprilReports(timeReportDao, calendarRepository)
         }
     }
 
@@ -229,5 +246,59 @@ class WorkViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
+    }
+
+    //Добавление насильно данные
+    @RequiresApi(Build.VERSION_CODES.O)
+    suspend fun insertAprilReports(
+        timeReportDao: TimeReportDao,
+        calendarRepository: CalendarRepository
+    ) {
+        val year = 2025
+        val month = 4
+        val yearMonth = YearMonth.of(year, month)
+        val totalWorkHours = 160
+        val millisecondsPerHour = 1000L * 60 * 60
+
+        // Определяем текущий день (30 апреля 2025 года)
+        val currentDate = LocalDate.of(2025, 4, 30) // Можно заменить на LocalDate.now() в реальном коде
+
+        // Получаем выходные дни из базы данных
+        val selectedDays = calendarRepository.getSelectedDays(year, month)
+        // Фильтруем рабочие дни, исключая текущий день
+        val workingDays = (1..yearMonth.lengthOfMonth())
+            .filter { !selectedDays.contains(it) } // Исключаем выходные
+            .filter { day -> LocalDate.of(year, month, day) != currentDate } // Исключаем текущий день
+
+        if (workingDays.isEmpty()) {
+            Log.e("InsertAprilReports", "No working days found for April 2025")
+            return
+        }
+
+        // Рассчитываем рабочее время на день
+        val hoursPerDay = totalWorkHours.toDouble() / workingDays.size
+        val workTimeMillisPerDay = (hoursPerDay * millisecondsPerHour).toLong()
+
+        // Для каждого рабочего дня создаём запись
+        workingDays.forEach { day ->
+            val date = LocalDate.of(year, month, day)
+            val startTime = date.atTime(9, 0).toInstant(ZoneOffset.UTC).toEpochMilli()
+            val endTime = startTime + workTimeMillisPerDay // Предполагаем, что endTime = startTime + workTime
+
+            val reportEntity = TimeReportEntity(
+                date = date,
+                startTime = startTime,
+                endTime = endTime,
+                workTime = workTimeMillisPerDay,
+                pauses = Json.encodeToString(emptyList<Pair<Long, Long?>>())
+            )
+
+            try {
+                timeReportDao.insertTimeReport(reportEntity)
+                Log.d("InsertAprilReports", "Inserted report for $date: ${TimeFormatter.formatTime(workTimeMillisPerDay)}")
+            } catch (e: Exception) {
+                Log.e("InsertAprilReports", "Failed to insert report for $date: ${e.message}", e)
+            }
+        }
     }
 }
