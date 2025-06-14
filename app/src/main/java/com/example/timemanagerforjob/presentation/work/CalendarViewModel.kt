@@ -46,37 +46,6 @@ class CalendarViewModel @Inject constructor(
         }
     }
 
-//    private fun loadMonthData() {
-//        viewModelScope.launch {
-//            _uiState.update { it.copy(isLoading = true) }
-//            val month = _uiState.value.currentMonth
-//
-//            val yearInitialized = appPreferences.isYearInitialized(month.year)
-//            if (!yearInitialized) {
-//                for (monthValue in 1..12) {
-//                    calendarRepository.initializeWeekendDays(month.year, monthValue)
-//                }
-//                appPreferences.setYearInitialized(month.year)
-//            }
-//
-//            when (val result = getMonthDataUseCase(month)) {
-//                is Result.Success -> {
-//                    _uiState.update {
-//                        it.copy(
-//                            selectedDays = result.value.selectedDays.toSet(),
-//                            isLoading = false,
-//                            errorMessage = null
-//                        )
-//                    }
-//                }
-//                is Result.Failure -> {
-//                    ErrorHandler.emitError(result.exception.message ?: "Не удалось загрузить данные месяца")
-//                    _uiState.update { it.copy( isLoading = false ) }
-//                }
-//            }
-//        }
-//    }
-
     private fun loadMonthData() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
