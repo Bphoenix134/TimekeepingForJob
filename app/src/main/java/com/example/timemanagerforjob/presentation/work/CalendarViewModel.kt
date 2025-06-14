@@ -18,7 +18,6 @@ import kotlinx.coroutines.launch
 import java.time.YearMonth
 import javax.inject.Inject
 
-@RequiresApi(Build.VERSION_CODES.O)
 @HiltViewModel
 class CalendarViewModel @Inject constructor(
     private val calendarRepository: CalendarRepository,
@@ -96,7 +95,6 @@ class CalendarViewModel @Inject constructor(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 data class CalendarUiState(
     val currentMonth: YearMonth = YearMonth.now(),
     val selectedDays: Set<Int> = emptySet(),

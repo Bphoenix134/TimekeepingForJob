@@ -2,8 +2,6 @@ package com.example.timemanagerforjob.utils.preferences
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.os.Build
-import androidx.annotation.RequiresApi
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -24,16 +22,6 @@ class AppPreferences @Inject constructor(
         prefs.edit() {
             putBoolean("is_first_launch", false)
         }
-    }
-
-    fun isYearInitialized(year: Int): Boolean {
-        return prefs.getBoolean("year_initialized_$year", false)
-    }
-
-    @SuppressLint("CommitPrefEdits")
-    fun setYearInitialized(year: Int) {
-        prefs.edit()
-            .putBoolean("year_initialized_$year", true)
     }
 
     fun getWeekdayHourlyRate(): Float {
@@ -74,12 +62,10 @@ class AppPreferences @Inject constructor(
         prefs.edit() { putBoolean(key, value) }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun isMonthInitialized(yearMonth: YearMonth): Boolean {
         return getBoolean("month_${yearMonth.year}_${yearMonth.monthValue}_initialized", false)
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun setMonthInitialized(yearMonth: YearMonth) {
         setBoolean("month_${yearMonth.year}_${yearMonth.monthValue}_initialized", true)
     }

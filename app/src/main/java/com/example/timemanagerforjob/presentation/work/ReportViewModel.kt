@@ -1,7 +1,5 @@
 package com.example.timemanagerforjob.presentation.work
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.timemanagerforjob.data.local.dao.TimeReportDao
@@ -24,7 +22,6 @@ import java.time.YearMonth
 import java.time.ZoneOffset
 import javax.inject.Inject
 
-@RequiresApi(Build.VERSION_CODES.O)
 @HiltViewModel
 class ReportViewModel @Inject constructor(
     private val timeReportRepository: TimeReportRepository,
@@ -111,7 +108,6 @@ class ReportViewModel @Inject constructor(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 data class ReportUiState(
     val reportState: TimeReport? = null,
     val errorMessage: String? = null

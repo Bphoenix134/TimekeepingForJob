@@ -1,7 +1,5 @@
 package com.example.timemanagerforjob.data.repository
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import com.example.timemanagerforjob.domain.repository.CalendarRepository
 import java.time.YearMonth
 import com.example.timemanagerforjob.data.local.dao.SelectedDayDao
@@ -11,7 +9,6 @@ import javax.inject.Inject
 class CalendarRepositoryImpl @Inject constructor(
     private val dao: SelectedDayDao
 ) : CalendarRepository {
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun getDaysOfMonth(yearMonth: YearMonth): List<Int> {
         return (1..yearMonth.lengthOfMonth()).toList()
     }
@@ -35,7 +32,6 @@ class CalendarRepositoryImpl @Inject constructor(
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun initializeWeekendDays(year: Int, month: Int) {
         val yearMonth = YearMonth.of(year, month)
         val existingDays = dao.getSelectedDaysForMonth(month, year).map { it.day }.toSet()

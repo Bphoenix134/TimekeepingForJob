@@ -1,9 +1,7 @@
 package com.example.timemanagerforjob.presentation.statistics
 
 import android.Manifest
-import android.content.Context
 import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -51,7 +49,6 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import java.time.format.DateTimeFormatter
 
-@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun StatisticsScreen(
@@ -250,7 +247,6 @@ private fun DayStatistics(data: DayStatisticsData?) {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun WeekStatistics(data: WeekStatisticsData?) {
     Column(
@@ -315,7 +311,6 @@ private fun WeekStatistics(data: WeekStatisticsData?) {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun MonthStatistics(data: MonthStatisticsData?) {
     Column(

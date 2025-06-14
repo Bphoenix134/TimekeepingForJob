@@ -2,8 +2,6 @@ package com.example.timemanagerforjob.di
 
 import android.app.Application
 import android.content.Context
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.room.Room
 import com.example.timemanagerforjob.auth.AuthRepository
 import com.example.timemanagerforjob.data.local.dao.SelectedDayDao
@@ -17,7 +15,9 @@ import com.example.timemanagerforjob.domain.usecases.GetMonthDataUseCase
 import com.example.timemanagerforjob.domain.usecases.ManageTimeReportUseCase
 import com.example.timemanagerforjob.presentation.settings.SettingsViewModel
 import com.example.timemanagerforjob.presentation.statistics.StatisticsViewModel
-import com.example.timemanagerforjob.presentation.work.WorkViewModel
+import com.example.timemanagerforjob.presentation.work.CalendarViewModel
+import com.example.timemanagerforjob.presentation.work.ReportViewModel
+import com.example.timemanagerforjob.presentation.work.SessionViewModel
 import com.example.timemanagerforjob.utils.preferences.AppPreferences
 import dagger.Module
 import dagger.Provides
@@ -26,7 +26,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
-@Module @InstallIn(SingletonComponent::class) object AppModule {
+@Module
+@InstallIn(SingletonComponent::class)
+object AppModule {
 
     @Provides
     @Singleton
@@ -93,30 +95,35 @@ import javax.inject.Singleton
         return AuthRepository(context)
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     @Provides
     @Singleton
-    fun provideWorkViewModel(
-        timeReportRepository: TimeReportRepository,
-        timeReportDao: TimeReportDao,
+    fun provideCalendarViewModel(
         calendarRepository: CalendarRepository,
         getMonthDataUseCase: GetMonthDataUseCase,
-        manageTimeReportUseCase: ManageTimeReportUseCase,
-        appPreferences: AppPreferences,
-        context: Context
-    ): WorkViewModel {
-        return WorkViewModel(
-            timeReportRepository,
-            timeReportDao,
-            calendarRepository,
-            getMonthDataUseCase,
-            manageTimeReportUseCase,
-            appPreferences,
-            context
-        )
+        appPreferences: AppPreferences
+    ): CalendarViewModel {
+        return CalendarViewModel(calendarRepository, getMonthDataUseCase, appPreferences)
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
+    @Provides
+    @Singleton
+    fun provideSessionViewModel(
+        manageTimeReportUseCase: ManageTimeReportUseCase,
+        context: Context
+    ): SessionViewModel {
+        return SessionViewModel(manageTimeReportUseCase, context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideReportViewModel(
+        timeReportRepository: TimeReportRepository,
+        timeReportDao: TimeReportDao,
+        calendarRepository: CalendarRepository
+    ): ReportViewModel {
+        return ReportViewModel(timeReportRepository, timeReportDao, calendarRepository)
+    }
+
     @Provides
     @Singleton
     fun provideStatisticsViewModel(
@@ -127,7 +134,6 @@ import javax.inject.Singleton
         return StatisticsViewModel(timeReportRepository, calendarRepository, appPreferences)
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     @Provides
     @Singleton
     fun provideSettingsViewModel(
@@ -136,5 +142,4 @@ import javax.inject.Singleton
     ): SettingsViewModel {
         return SettingsViewModel(appPreferences, authRepository)
     }
-
 }

@@ -4,8 +4,6 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.annotation.RequiresApi
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
@@ -20,12 +18,52 @@ import com.example.timemanagerforjob.utils.notifications.NotificationHelper
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-@RequiresApi(Build.VERSION_CODES.O)
 class MainActivity : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         NotificationHelper.createNotificationChannel(this)
+        requestStorageAndNotificationPermissions()
+        setContent {
+            val navController = rememberNavController()
+            val authViewModel: AuthViewModel = hiltViewModel()
+            val isAuthenticated = authViewModel.uiState.collectAsState().value.isAuthenticated
+
+            NavHost(
+                navController = navController,
+                startDestination = if (isAuthenticated) Routes.Calendar else Routes.Auth
+            ) {
+                composable(Routes.Auth) {
+                    AuthScreen(
+                        onAuthenticated = {
+                            navController.navigate(Routes.Calendar) {
+                                popUpTo(Routes.Auth) { inclusive = true }
+                            }
+                        }
+                    )
+                }
+                composable(Routes.Calendar) {
+                    WorkScreenContainer(
+                        onNavigateToStatistics = { navController.navigate(Routes.Statistics) },
+                        onNavigateToSettings = { navController.navigate(Routes.Settings) }
+                    )
+                }
+                composable(Routes.Statistics) {
+                    StatisticsScreen(
+                        onNavigateToCalendar = { navController.navigate(Routes.Calendar) },
+                        onNavigateToSettings = { navController.navigate(Routes.Settings) }
+                    )
+                }
+                composable(Routes.Settings) {
+                    SettingsScreen(
+                        onNavigateToCalendar = { navController.navigate(Routes.Calendar) },
+                        onNavigateToStatistics = { navController.navigate(Routes.Statistics) }
+                    )
+                }
+            }
+        }
+    }
+
+    private fun requestStorageAndNotificationPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             requestPermissions(
                 arrayOf(
@@ -40,45 +78,12 @@ class MainActivity : ComponentActivity() {
                 100
             )
         }
-        setContent {
-            val navController = rememberNavController()
-            AppNavigation(navController)
-        }
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
-@Composable
-fun AppNavigation(navController: androidx.navigation.NavHostController) {
-    val authViewModel: AuthViewModel = hiltViewModel()
-    val isAuthenticated = authViewModel.uiState.collectAsState().value.isAuthenticated
-
-    NavHost(
-        navController = navController,
-        startDestination = if (isAuthenticated) "calendar" else "auth"
-    ) {
-        composable("auth") {
-            AuthScreen(
-                onAuthenticated = { navController.navigate("calendar") { popUpTo("auth") { inclusive = true } } }
-            )
-        }
-        composable("calendar") {
-            WorkScreenContainer(
-                onNavigateToStatistics = { navController.navigate("statistics") },
-                onNavigateToSettings = { navController.navigate("settings") }
-            )
-        }
-        composable("statistics") {
-            StatisticsScreen(
-                onNavigateToCalendar = { navController.navigate("calendar") },
-                onNavigateToSettings = { navController.navigate("settings") }
-            )
-        }
-        composable("settings") {
-            SettingsScreen(
-                onNavigateToCalendar = { navController.navigate("calendar") },
-                onNavigateToStatistics = { navController.navigate("statistics") }
-            )
-        }
-    }
+object Routes {
+    const val Auth = "auth"
+    const val Calendar = "calendar"
+    const val Statistics = "statistics"
+    const val Settings = "settings"
 }

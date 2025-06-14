@@ -1,14 +1,11 @@
-package com.example.timemanagerforjob.data.mapper
+package com.example.timemanagerforjob.data.local.mapper
 
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import com.example.timemanagerforjob.data.local.entity.TimeReportEntity
 import com.example.timemanagerforjob.domain.model.TimeReport
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-@RequiresApi(Build.VERSION_CODES.O)
 fun TimeReportEntity.toDomain(): TimeReport {
     return TimeReport(
         date = date,

@@ -1,7 +1,5 @@
 package com.example.timemanagerforjob.presentation.statistics
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import com.example.timemanagerforjob.domain.model.TimeReport
 import java.time.LocalDate
 import java.time.LocalDate.now
@@ -11,7 +9,6 @@ enum class StatisticsMode {
     DAY, WEEK, MONTH
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 data class StatisticsUiState(
     val mode: StatisticsMode = StatisticsMode.DAY,
     val currentDate: LocalDate = now(),

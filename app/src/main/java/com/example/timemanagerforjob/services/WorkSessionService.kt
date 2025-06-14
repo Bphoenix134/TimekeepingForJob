@@ -10,7 +10,6 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -45,7 +44,6 @@ class WorkSessionService : Service() {
         super.onCreate()
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
@@ -108,7 +106,6 @@ class WorkSessionService : Service() {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     private fun stopSession() {
         session?.let { currentSession ->
             CoroutineScope(Dispatchers.IO).launch {
@@ -130,7 +127,6 @@ class WorkSessionService : Service() {
         isPaused = false
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     @androidx.annotation.RequiresPermission(android.Manifest.permission.POST_NOTIFICATIONS)
     private fun pauseSession() {
         if (session?.endTime != null) {
@@ -155,7 +151,6 @@ class WorkSessionService : Service() {
         timerJob?.cancel()
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     private fun resumeSession() {
         if (session?.endTime != null) {
             Log.w("WorkSessionService", "resumeSession: session already completed — skipping")

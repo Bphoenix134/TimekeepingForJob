@@ -1,7 +1,5 @@
 package com.example.timemanagerforjob.domain.model
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import java.time.LocalDate
 import android.os.Parcel
 import android.os.Parcelable
@@ -24,7 +22,6 @@ data class WorkSession(
     }
 
     companion object {
-        @RequiresApi(Build.VERSION_CODES.O)
         fun create(date: LocalDate, startTime: Long): WorkSession {
             val isWeekend = date.dayOfWeek.value >= 6
             return WorkSession(
@@ -47,15 +44,12 @@ data class WorkSession(
     }
 
     constructor(parcel: Parcel) : this(
-        date = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        date =
             LocalDate.of(
                 parcel.readInt(),
                 parcel.readInt(),
                 parcel.readInt()
-            )
-        } else {
-            throw UnsupportedOperationException("LocalDate requires API 26+")
-        },
+            ),
         startTime = parcel.readLong(),
         endTime = parcel.readLong().let { if (it == -1L) null else it },
         isWeekend = parcel.readByte() != 0.toByte(),
@@ -69,7 +63,6 @@ data class WorkSession(
         }
     )
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeInt(date.year)
         parcel.writeInt(date.monthValue)

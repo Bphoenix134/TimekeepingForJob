@@ -1,7 +1,5 @@
 package com.example.timemanagerforjob.presentation.settings
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,7 +26,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.timemanagerforjob.presentation.navigation.BottomNavigationBar
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SettingsScreen(
     onNavigateToCalendar: () -> Unit,

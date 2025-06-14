@@ -12,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.timemanagerforjob"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -94,4 +94,5 @@ dependencies {
     implementation(libs.jexcelapi)
     implementation(libs.google.services)
     implementation(libs.play.services.auth)
+    implementation(libs.core.library.desugaring)
 }

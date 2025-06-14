@@ -1,8 +1,6 @@
 package com.example.timemanagerforjob.domain.usecases
 
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import com.example.timemanagerforjob.domain.model.TimeReport
 import com.example.timemanagerforjob.domain.model.WorkSession
 import com.example.timemanagerforjob.domain.repository.TimeReportRepository
@@ -14,7 +12,6 @@ import javax.inject.Inject
 class ManageTimeReportUseCase @Inject constructor(
     private val repository: TimeReportRepository
 ) {
-    @RequiresApi(Build.VERSION_CODES.O)
     suspend fun startSession(date: LocalDate): Result<WorkSession> {
         val existingReport = repository.getReportByDate(date).getOrNull()
         if (existingReport != null) {
@@ -30,7 +27,6 @@ class ManageTimeReportUseCase @Inject constructor(
         return Result.Success(session)
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     suspend fun stopSession(session: WorkSession): Result<TimeReport> {
         if (session.endTime != null) {
             return Result.Failure(IllegalStateException("Session already stopped"))
@@ -41,7 +37,6 @@ class ManageTimeReportUseCase @Inject constructor(
         return Result.Success(report)
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     suspend fun pauseSession(session: WorkSession): Result<WorkSession> {
         if (session.endTime != null) {
             return Result.Failure(IllegalStateException("Cannot pause a stopped session"))
@@ -56,7 +51,6 @@ class ManageTimeReportUseCase @Inject constructor(
         return Result.Success(updatedSession)
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     suspend fun resumeSession(session: WorkSession): Result<WorkSession> {
         if (session.endTime != null) {
             return Result.Failure(IllegalStateException("Cannot resume a stopped session"))
@@ -80,7 +74,6 @@ class ManageTimeReportUseCase @Inject constructor(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 private fun WorkSession.toTimeReport(endTime: Long? = this.endTime): TimeReport {
     val calculatedWorkTime = calculateWorkTime(endTime ?: System.currentTimeMillis())
     Log.d("WorkSessionDebug", "base=${(endTime ?: System.currentTimeMillis()) - startTime}, pauseTime=${pauses.sumOf { (it.second ?: System.currentTimeMillis()) - it.first }}, result=$calculatedWorkTime")

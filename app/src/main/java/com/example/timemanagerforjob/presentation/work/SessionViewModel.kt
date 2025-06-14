@@ -3,9 +3,7 @@ package com.example.timemanagerforjob.presentation.work
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -25,7 +23,6 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
 
-@RequiresApi(Build.VERSION_CODES.O)
 @HiltViewModel
 @SuppressLint("StaticFieldLeak")
 class SessionViewModel @Inject constructor(
@@ -129,7 +126,6 @@ class SessionViewModel @Inject constructor(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 data class SessionUiState(
     val sessionState: WorkSession? = null,
     val workedTime: Long = 0L,

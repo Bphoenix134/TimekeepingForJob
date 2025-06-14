@@ -1,12 +1,9 @@
 package com.example.timemanagerforjob.domain.model
 
-import android.os.Build
 import android.os.Parcel
 import android.os.Parcelable
-import androidx.annotation.RequiresApi
 import java.time.LocalDate
 
-@RequiresApi(Build.VERSION_CODES.O)
 data class TimeReport(
     val date: LocalDate,
     val startTime: Long,

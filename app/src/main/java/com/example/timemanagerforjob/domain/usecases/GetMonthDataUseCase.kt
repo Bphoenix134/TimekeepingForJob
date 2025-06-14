@@ -1,7 +1,5 @@
 package com.example.timemanagerforjob.domain.usecases
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import com.example.timemanagerforjob.domain.repository.CalendarRepository
 import com.example.timemanagerforjob.domain.model.Result
 import java.time.YearMonth
@@ -15,7 +13,6 @@ data class MonthData(
 class GetMonthDataUseCase @Inject constructor(
     private val repository: CalendarRepository
 ) {
-    @RequiresApi(Build.VERSION_CODES.O)
     suspend operator fun invoke(yearMonth: YearMonth): Result<MonthData> {
         return try {
             if (yearMonth.isBefore(YearMonth.of(1900, 1)) || yearMonth.isAfter(YearMonth.of(9999, 12))) {
