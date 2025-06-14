@@ -1,0 +1,118 @@
+package com.example.timemanagerforjob.presentation.work
+
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.timemanagerforjob.data.local.dao.TimeReportDao
+import com.example.timemanagerforjob.data.local.entity.TimeReportEntity
+import com.example.timemanagerforjob.domain.model.Result
+import com.example.timemanagerforjob.domain.model.TimeReport
+import com.example.timemanagerforjob.domain.repository.CalendarRepository
+import com.example.timemanagerforjob.domain.repository.TimeReportRepository
+import com.example.timemanagerforjob.utils.ErrorHandler
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import java.time.LocalDate
+import java.time.YearMonth
+import java.time.ZoneOffset
+import javax.inject.Inject
+
+@RequiresApi(Build.VERSION_CODES.O)
+@HiltViewModel
+class ReportViewModel @Inject constructor(
+    private val timeReportRepository: TimeReportRepository,
+    private val timeReportDao: TimeReportDao,
+    private val calendarRepository: CalendarRepository
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(ReportUiState())
+    val uiState: StateFlow<ReportUiState> = _uiState.asStateFlow()
+
+    init {
+        loadTodayReport()
+        insertAprilReportsForTesting()
+    }
+
+    fun loadTodayReport() {
+        viewModelScope.launch {
+            when (val result = timeReportRepository.getReportByDate(LocalDate.now())) {
+                is Result.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            reportState = result.value,
+                            errorMessage = null
+                        )
+                    }
+                }
+                is Result.Failure -> {
+                    ErrorHandler.emitError("Не удалось загрузить отчёт за сегодня")
+                    _uiState.update { it.copy( reportState = null ) }
+                }
+            }
+        }
+    }
+
+    fun insertAprilReportsForTesting() {
+        viewModelScope.launch {
+            insertAprilReports(timeReportDao, calendarRepository)
+        }
+    }
+
+    private suspend fun insertAprilReports(
+        timeReportDao: TimeReportDao,
+        calendarRepository: CalendarRepository
+    ) {
+        val year = 2025
+        val month = 4
+        val yearMonth = YearMonth.of(year, month)
+        val totalWorkHours = 160
+        val millisecondsPerHour = 1000L * 60 * 60
+
+        val currentDate = LocalDate.of(2025, 4, 30)
+
+        val selectedDays = calendarRepository.getSelectedDays(year, month)
+        val workingDays = (1..yearMonth.lengthOfMonth())
+            .filter { !selectedDays.contains(it) }
+            .filter { day -> LocalDate.of(year, month, day) != currentDate }
+
+        if (workingDays.isEmpty()) {
+            return
+        }
+
+        val hoursPerDay = totalWorkHours.toDouble() / workingDays.size
+        val workTimeMillisPerDay = (hoursPerDay * millisecondsPerHour).toLong()
+
+        workingDays.forEach { day ->
+            val date = LocalDate.of(year, month, day)
+            val startTime = date.atTime(9, 0).toInstant(ZoneOffset.UTC).toEpochMilli()
+            val endTime = startTime + workTimeMillisPerDay
+
+            val reportEntity = TimeReportEntity(
+                date = date,
+                startTime = startTime,
+                endTime = endTime,
+                workTime = workTimeMillisPerDay,
+                pauses = Json.encodeToString(emptyList<Pair<Long, Long?>>())
+            )
+
+            try {
+                timeReportDao.insertTimeReport(reportEntity)
+            } catch (e: Exception) {
+                ErrorHandler.emitError("Не удалось вставить отчёт за $date: ${e.message}")
+            }
+        }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+data class ReportUiState(
+    val reportState: TimeReport? = null,
+    val errorMessage: String? = null
+)
