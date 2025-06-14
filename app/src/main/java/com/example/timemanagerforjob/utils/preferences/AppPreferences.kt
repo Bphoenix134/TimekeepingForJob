@@ -2,10 +2,13 @@ package com.example.timemanagerforjob.utils.preferences
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.os.Build
+import androidx.annotation.RequiresApi
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 import androidx.core.content.edit
+import java.time.YearMonth
 
 @Singleton
 class AppPreferences @Inject constructor(
@@ -61,5 +64,23 @@ class AppPreferences @Inject constructor(
 
     fun getUserEmail(): String? {
         return prefs.getString("user_email", null)
+    }
+
+    fun getBoolean(key: String, defaultValue: Boolean): Boolean {
+        return prefs.getBoolean(key, defaultValue)
+    }
+
+    fun setBoolean(key: String, value: Boolean) {
+        prefs.edit() { putBoolean(key, value) }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun isMonthInitialized(yearMonth: YearMonth): Boolean {
+        return getBoolean("month_${yearMonth.year}_${yearMonth.monthValue}_initialized", false)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun setMonthInitialized(yearMonth: YearMonth) {
+        setBoolean("month_${yearMonth.year}_${yearMonth.monthValue}_initialized", true)
     }
 }
