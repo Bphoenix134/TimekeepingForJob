@@ -2,6 +2,7 @@ package com.example.timemanagerforjob.di
 
 import android.app.Application
 import android.content.Context
+import androidx.credentials.CredentialManager
 import androidx.room.Room
 import com.example.timemanagerforjob.auth.AuthRepository
 import com.example.timemanagerforjob.data.local.dao.SelectedDayDao
@@ -38,9 +39,15 @@ object AppModule {
             AppDatabase::class.java,
             "app_database"
         )
-            .addMigrations(AppDatabase.MIGRATION_2_3)
+            .addMigrations(AppDatabase.MIGRATION_2_3, AppDatabase.MIGRATION_3_4)
             .fallbackToDestructiveMigration(false)
             .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideCredentialManager(@ApplicationContext context: Context): CredentialManager {
+        return CredentialManager.create(context)
     }
 
     @Provides
@@ -57,14 +64,14 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideCalendarRepository(dao: SelectedDayDao): CalendarRepository {
-        return CalendarRepositoryImpl(dao)
+    fun provideCalendarRepository(dao: SelectedDayDao, appPreferences: AppPreferences): CalendarRepository {
+        return CalendarRepositoryImpl(dao, appPreferences)
     }
 
     @Provides
     @Singleton
-    fun provideTimeReportRepository(dao: TimeReportDao): TimeReportRepository {
-        return TimeReportRepositoryImpl(dao)
+    fun provideTimeReportRepository(dao: TimeReportDao, appPreferences: AppPreferences): TimeReportRepository {
+        return TimeReportRepositoryImpl(dao, appPreferences)
     }
 
     @Provides
@@ -91,12 +98,6 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideAuthRepository(@ApplicationContext context: Context): AuthRepository {
-        return AuthRepository(context)
-    }
-
-    @Provides
-    @Singleton
     fun provideCalendarViewModel(
         calendarRepository: CalendarRepository,
         getMonthDataUseCase: GetMonthDataUseCase,
@@ -119,9 +120,10 @@ object AppModule {
     fun provideReportViewModel(
         timeReportRepository: TimeReportRepository,
         timeReportDao: TimeReportDao,
-        calendarRepository: CalendarRepository
+        calendarRepository: CalendarRepository,
+        appPreferences: AppPreferences
     ): ReportViewModel {
-        return ReportViewModel(timeReportRepository, timeReportDao, calendarRepository)
+        return ReportViewModel(timeReportRepository, timeReportDao, calendarRepository, appPreferences)
     }
 
     @Provides

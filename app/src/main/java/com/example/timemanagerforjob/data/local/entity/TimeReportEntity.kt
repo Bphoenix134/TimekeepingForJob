@@ -11,5 +11,6 @@ data class TimeReportEntity(
     val startTime: Long,
     val endTime: Long?,
     val workTime: Long,
-    val pauses: String
+    val pauses: String,
+    val userEmail: String
 )

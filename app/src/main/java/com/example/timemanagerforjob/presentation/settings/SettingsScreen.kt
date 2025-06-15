@@ -1,19 +1,7 @@
 package com.example.timemanagerforjob.presentation.settings
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
@@ -30,9 +18,10 @@ import com.example.timemanagerforjob.presentation.navigation.BottomNavigationBar
 fun SettingsScreen(
     onNavigateToCalendar: () -> Unit,
     onNavigateToStatistics: () -> Unit,
-    viewModel: SettingsViewModel = hiltViewModel() ) {
-
-    val uiState = viewModel.uiState.collectAsState().value
+    onNavigateToAuth: () -> Unit,
+    settingsViewModel: SettingsViewModel = hiltViewModel()
+) {
+    val uiState = settingsViewModel.uiState.collectAsState().value
     val snackbarHostState = remember { SnackbarHostState() }
 
     Scaffold(
@@ -59,13 +48,13 @@ fun SettingsScreen(
             )
             OutlinedTextField(
                 value = uiState.weekdayRate.toString(),
-                onValueChange = { viewModel.updateWeekdayRate(it.toFloatOrNull() ?: 0f) },
+                onValueChange = { settingsViewModel.updateWeekdayRate(it.toFloatOrNull() ?: 0f) },
                 label = { Text("Почасовая ставка в будние дни (руб.)") },
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
                 value = uiState.weekendRate.toString(),
-                onValueChange = { viewModel.updateWeekendRate(it.toFloatOrNull() ?: 0f) },
+                onValueChange = { settingsViewModel.updateWeekendRate(it.toFloatOrNull() ?: 0f) },
                 label = { Text("Почасовая ставка в выходные дни (руб.)") },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -75,21 +64,23 @@ fun SettingsScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Аккаунт: ${uiState.userEmail ?: "Вошел в систему"}",
+                    text = "Аккаунт: ${uiState.userEmail ?: "Не авторизован"}",
                     fontSize = 16.sp
                 )
                 Button(
-                    onClick = { viewModel.switchAccount() },
+                    onClick = {
+                        settingsViewModel.switchAccount()
+                        onNavigateToAuth()
+                    },
                     modifier = Modifier.height(48.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.LightGray,
                         contentColor = Color.Black
                     )
-                ){
-                    Text("Поменять аккаунт")
+                ) {
+                    Text("Выйти")
                 }
             }
         }
     }
-
 }

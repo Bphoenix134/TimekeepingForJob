@@ -1,6 +1,5 @@
 package com.example.timemanagerforjob.presentation.settings
 
-
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.timemanagerforjob.auth.AuthRepository
@@ -13,10 +12,10 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class SettingsViewModel
-@Inject constructor(
+class SettingsViewModel @Inject constructor(
     private val appPreferences: AppPreferences,
-    private val authRepository: AuthRepository ) : ViewModel() {
+    private val authRepository: AuthRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
@@ -26,7 +25,7 @@ class SettingsViewModel
     }
 
     private fun loadSettings() {
-        val userEmail = appPreferences.getUserEmail() ?: authRepository.getCurrentUser()?.email
+        val userEmail = appPreferences.getUserEmail()
         _uiState.value = SettingsUiState(
             weekdayRate = appPreferences.getWeekdayHourlyRate(),
             weekendRate = appPreferences.getWeekendHourlyRate(),
@@ -48,14 +47,6 @@ class SettingsViewModel
         viewModelScope.launch {
             authRepository.signOut()
             _uiState.value = _uiState.value.copy(userEmail = null)
-            appPreferences.saveUserEmail(null)
         }
     }
-
 }
-
-data class SettingsUiState(
-    val weekdayRate: Float = 500f,
-    val weekendRate: Float = 750f,
-    val userEmail: String? = null,
-    val errorMessage: String? = null )

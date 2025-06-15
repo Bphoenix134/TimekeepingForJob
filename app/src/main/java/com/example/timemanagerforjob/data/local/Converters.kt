@@ -1,8 +1,6 @@
 package com.example.timemanagerforjob.data.local
 
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.room.TypeConverter
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -15,7 +13,6 @@ class Converters {
         return date?.toString()
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     @TypeConverter
     fun toLocalDate(dateString: String?): LocalDate? {
         return try {

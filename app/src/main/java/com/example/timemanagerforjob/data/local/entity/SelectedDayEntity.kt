@@ -9,5 +9,6 @@ data class SelectedDayEntity(
     val id: Long = 0,
     val day: Int,
     val month: Int,
-    val year: Int
+    val year: Int,
+    val userEmail: String
 )

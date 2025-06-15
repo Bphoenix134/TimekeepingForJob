@@ -93,6 +93,9 @@ dependencies {
     implementation(libs.androidx.work.runtime)
     implementation(libs.jexcelapi)
     implementation(libs.google.services)
-    implementation(libs.play.services.auth)
+    implementation(libs.google.identity.googleid)
     implementation(libs.core.library.desugaring)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.jetbrains.kotlinx.coroutines)
 }

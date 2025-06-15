@@ -1,12 +1,10 @@
 package com.example.timemanagerforjob.auth
 
-import android.content.Intent
+import android.app.Activity
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.example.timemanagerforjob.domain.model.Result
-import com.google.android.gms.common.api.ApiException
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,28 +27,20 @@ class AuthViewModel @Inject constructor(
     private fun checkCurrentUser() {
         val currentUser = authRepository.getCurrentUser()
         Log.d("AuthViewModel", "checkCurrentUser: currentUser = $currentUser")
-        _uiState.value = AuthUiState(isAuthenticated = currentUser != null, user = currentUser)
+        _uiState.value = _uiState.value.copy(
+            isAuthenticated = currentUser != null,
+            user = currentUser
+        )
     }
 
-    fun startSignIn() {
-        Log.d("AuthViewModel", "Starting sign-in process (mocked)")
+    fun startSignIn(activity: Activity, isSignUp: Boolean = false) {
+        Log.d("AuthViewModel", "Starting sign-in process, isSignUp: $isSignUp")
         _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
         viewModelScope.launch {
-            _uiState.value = AuthUiState(
-                isAuthenticated = true,
-                user = null,
-                isLoading = false
-            )
-        }
-    }
-
-    fun handleSignInResult(data: Intent?) {
-        viewModelScope.launch {
-            Log.d("AuthViewModel", "Handling sign-in result, data: $data")
-            when (val result = authRepository.handleSignInResult(data)) {
+            when (val result = authRepository.signInWithGoogle(activity, isSignUp)) {
                 is Result.Success -> {
-                    Log.d("AuthViewModel", "Sign-in successful: ${result.value.email}")
-                    _uiState.value = AuthUiState(
+                    Log.d("AuthViewModel", "Sign-in successful: ${result.value.id}")
+                    _uiState.value = _uiState.value.copy(
                         isAuthenticated = true,
                         user = result.value,
                         isLoading = false
@@ -58,14 +48,31 @@ class AuthViewModel @Inject constructor(
                 }
                 is Result.Failure -> {
                     Log.e("AuthViewModel", "Sign-in failed", result.exception)
-                    val errorMessage = when (result.exception) {
-                        is ApiException -> "Google Sign-In failed: ${result.exception.statusCode}"
-                        else -> "Sign-in failed: ${result.exception.message}"
-                    }
-                    _uiState.value = AuthUiState(
+                    _uiState.value = _uiState.value.copy(
                         isAuthenticated = false,
-                        errorMessage = errorMessage,
+                        errorMessage = result.exception.message ?: "Ошибка входа",
                         isLoading = false
+                    )
+                }
+            }
+        }
+    }
+
+    fun signOut() {
+        viewModelScope.launch {
+            when (val result = authRepository.signOut()) {
+                is Result.Success -> {
+                    Log.d("AuthViewModel", "Sign-out successful")
+                    _uiState.value = _uiState.value.copy(
+                        isAuthenticated = false,
+                        user = null,
+                        errorMessage = null
+                    )
+                }
+                is Result.Failure -> {
+                    Log.e("AuthViewModel", "Sign-out failed", result.exception)
+                    _uiState.value = _uiState.value.copy(
+                        errorMessage = result.exception.message ?: "Ошибка выхода"
                     )
                 }
             }
@@ -74,9 +81,5 @@ class AuthViewModel @Inject constructor(
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(errorMessage = null)
-    }
-
-    fun clearSignInIntent() {
-        _uiState.value = _uiState.value.copy(signInIntent = null)
     }
 }
