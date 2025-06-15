@@ -1,9 +1,7 @@
 package com.example.timemanagerforjob.utils
 
 import android.content.Context
-import android.os.Build
 import android.os.Environment
-import androidx.annotation.RequiresApi
 import com.example.timemanagerforjob.domain.model.Result
 import com.example.timemanagerforjob.domain.model.TimeReport
 import com.example.timemanagerforjob.utils.formatters.TimeFormatter
@@ -16,7 +14,6 @@ import java.time.format.DateTimeFormatter
 
 object ExcelExportUtil {
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun exportMonthlyStatistics(
         context: Context,
         reports: List<TimeReport>,

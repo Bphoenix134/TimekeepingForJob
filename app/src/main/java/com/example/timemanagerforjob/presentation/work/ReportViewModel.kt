@@ -9,6 +9,7 @@ import com.example.timemanagerforjob.domain.model.TimeReport
 import com.example.timemanagerforjob.domain.repository.CalendarRepository
 import com.example.timemanagerforjob.domain.repository.TimeReportRepository
 import com.example.timemanagerforjob.utils.ErrorHandler
+import com.example.timemanagerforjob.utils.preferences.AppPreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,7 +27,8 @@ import javax.inject.Inject
 class ReportViewModel @Inject constructor(
     private val timeReportRepository: TimeReportRepository,
     private val timeReportDao: TimeReportDao,
-    private val calendarRepository: CalendarRepository
+    private val calendarRepository: CalendarRepository,
+    private val appPreferences: AppPreferences
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ReportUiState())
@@ -58,13 +60,14 @@ class ReportViewModel @Inject constructor(
 
     fun insertAprilReportsForTesting() {
         viewModelScope.launch {
-            insertAprilReports(timeReportDao, calendarRepository)
+            insertAprilReports(timeReportDao, calendarRepository, appPreferences)
         }
     }
 
     private suspend fun insertAprilReports(
         timeReportDao: TimeReportDao,
-        calendarRepository: CalendarRepository
+        calendarRepository: CalendarRepository,
+        appPreferences: AppPreferences
     ) {
         val year = 2025
         val month = 4
@@ -85,6 +88,7 @@ class ReportViewModel @Inject constructor(
 
         val hoursPerDay = totalWorkHours.toDouble() / workingDays.size
         val workTimeMillisPerDay = (hoursPerDay * millisecondsPerHour).toLong()
+        val userEmail = appPreferences.getUserEmail()
 
         workingDays.forEach { day ->
             val date = LocalDate.of(year, month, day)
@@ -96,7 +100,8 @@ class ReportViewModel @Inject constructor(
                 startTime = startTime,
                 endTime = endTime,
                 workTime = workTimeMillisPerDay,
-                pauses = Json.encodeToString(emptyList<Pair<Long, Long?>>())
+                pauses = Json.encodeToString(emptyList<Pair<Long, Long?>>()),
+                userEmail = userEmail.toString()
             )
 
             try {

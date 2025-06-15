@@ -1,63 +1,102 @@
 package com.example.timemanagerforjob.auth
 
+
+import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.util.Log
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
-import com.google.android.gms.auth.api.signin.GoogleSignInClient
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.common.api.ApiException
+import androidx.credentials.ClearCredentialStateRequest
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialException
 import com.example.timemanagerforjob.R
 import com.example.timemanagerforjob.domain.model.Result
+import com.example.timemanagerforjob.utils.preferences.AppPreferences
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.security.MessageDigest
+import java.util.Base64
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
-@Singleton class AuthRepository @Inject constructor( private val context: Context )
-{ private val googleSignInClient: GoogleSignInClient by lazy {
-    val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-        .requestEmail()
-        .requestIdToken(context.getString(R.string.web_client_id))
-        .build()
-    GoogleSignIn.getClient(context, gso) }
-
-    fun getSignInIntent(): Intent {
-        Log.d("AuthRepository", "Building GoogleSignInOptions")
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestEmail()
-            .requestIdToken(context.getString(R.string.web_client_id))
-            .build()
-        Log.d("AuthRepository", "GoogleSignInOptions built: $gso")
-        val client = GoogleSignIn.getClient(context, gso)
-        Log.d("AuthRepository", "GoogleSignInClient created: $client")
-        val intent = client.signInIntent
-        Log.d("AuthRepository", "Sign-in intent created: $intent")
-        return intent
+@Singleton
+class AuthRepository @Inject constructor(
+    private val context: Context,
+    private val appPreferences: AppPreferences,
+    private val credentialManager: CredentialManager
+) {
+    private fun generateNonce(): String {
+        val randomString = UUID.randomUUID().toString()
+        val bytes = randomString.toByteArray()
+        val digest = MessageDigest.getInstance("SHA-256")
+        val hash = digest.digest(bytes)
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(hash)
     }
 
-    suspend fun handleSignInResult(data: Intent?): Result<GoogleSignInAccount> {
-        return try {
-            val task = GoogleSignIn.getSignedInAccountFromIntent(data)
-            val account = task.getResult(ApiException::class.java)
-            Result.Success(account)
-        } catch (e: ApiException) {
-            Result.Failure(e)
-        } catch (e: Exception) {
-            Result.Failure(e)
+    suspend fun signInWithGoogle(activity: Activity, isSignUp: Boolean = false): Result<GoogleIdTokenCredential>{
+        return withContext(Dispatchers.IO) {
+            try {
+                val googleIdOption = GetGoogleIdOption.Builder()
+                    .setFilterByAuthorizedAccounts(!isSignUp)
+                    .setServerClientId(context.getString(R.string.web_client_id))
+                    .setAutoSelectEnabled(true)
+                    .setNonce(generateNonce())
+                    .build()
+
+                val request = GetCredentialRequest.Builder()
+                    .addCredentialOption(googleIdOption)
+                    .build()
+
+                val result = credentialManager.getCredential(activity, request)
+                val credential = result.credential
+
+                if (credential is GoogleIdTokenCredential) {
+                    credential.id?.let { appPreferences.saveUserEmail(it) }
+                    Log.d("AuthRepository", "Sign-in successful: ${credential.id}")
+                    Result.Success(credential)
+                } else {
+                    Log.e("AuthRepository", "Unexpected credential type")
+                    Result.Failure(Exception("Unexpected credential type"))
+                }
+            } catch (e: GetCredentialException) {
+                Log.e("AuthRepository", "Google Sign-In failed: ${e.message}")
+                Result.Failure(e)
+            } catch (e: GoogleIdTokenParsingException) {
+                Log.e("AuthRepository", "Invalid Google ID token: ${e.message}")
+                Result.Failure(e)
+            } catch (e: Exception) {
+                Log.e("AuthRepository", "Unexpected error: ${e.message}")
+                Result.Failure(e)
+            }
         }
     }
 
-    fun signOut(): Result<Unit> {
-        return try {
-            googleSignInClient.signOut()
-            Result.Success(Unit)
-        } catch (e: Exception) {
-            Result.Failure(e)
+    suspend fun signOut(): Result<Unit> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val request = ClearCredentialStateRequest()
+                credentialManager.clearCredentialState(request)
+                appPreferences.saveUserEmail(null)
+                Log.d("AuthRepository", "Signed out successfully")
+                Result.Success(Unit)
+            } catch (e: Exception) {
+                Log.e("AuthRepository", "Sign out failed: ${e.message}")
+                Result.Failure(e)
+            }
         }
     }
 
-    fun getCurrentUser(): GoogleSignInAccount? {
-        return GoogleSignIn.getLastSignedInAccount(context)
+    fun getCurrentUser(): GoogleIdTokenCredential? {
+        val email = appPreferences.getUserEmail()
+        return if (email != null) {
+            GoogleIdTokenCredential.Builder()
+                .setId(email)
+                .build()
+        } else {
+            null
+        }
     }
-
 }

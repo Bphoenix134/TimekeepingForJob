@@ -56,7 +56,12 @@ class MainActivity : ComponentActivity() {
                 composable(Routes.Settings) {
                     SettingsScreen(
                         onNavigateToCalendar = { navController.navigate(Routes.Calendar) },
-                        onNavigateToStatistics = { navController.navigate(Routes.Statistics) }
+                        onNavigateToStatistics = { navController.navigate(Routes.Statistics) },
+                        onNavigateToAuth = {
+                            navController.navigate(Routes.Auth) {
+                                popUpTo(Routes.Settings) { inclusive = true }
+                            }
+                        }
                     )
                 }
             }

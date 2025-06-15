@@ -1,11 +1,6 @@
 package com.example.timemanagerforjob.auth
 
-import android.content.Intent
-import android.util.Log
-import androidx.activity.compose.ManagedActivityResultLauncher
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.ActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import android.app.Activity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -16,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -30,22 +26,7 @@ fun AuthScreen(
 ) {
     val uiState = viewModel.uiState.collectAsState().value
     val snackbarHostState = remember { SnackbarHostState() }
-
-    val launcher: ManagedActivityResultLauncher<Intent, ActivityResult> =
-        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            Log.d("AuthScreen", "Sign-in result received: $result")
-            viewModel.handleSignInResult(result.data)
-        }
-
-    Log.d("AuthScreen", "Current uiState: $uiState")
-
-    LaunchedEffect(uiState.signInIntent) {
-        uiState.signInIntent?.let {
-            Log.d("AuthScreen", "Launching sign-in intent")
-            launcher.launch(it)
-            viewModel.clearSignInIntent()
-        }
-    }
+    val context = LocalContext.current
 
     LaunchedEffect(uiState.isAuthenticated) {
         if (uiState.isAuthenticated) {
@@ -78,13 +59,15 @@ fun AuthScreen(
             )
             Spacer(modifier = Modifier.height(32.dp))
             Text(
-                text = "Welcome to Time Manager",
+                text = "Добро пожаловать в Time Manager",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(16.dp))
             Button(
-                onClick = { viewModel.startSignIn() },
+                onClick = {
+                    viewModel.startSignIn(context as Activity, isSignUp = false) // Передаём Activity
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -105,11 +88,28 @@ fun AuthScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Sign in with Google",
+                        text = "Войти с Google",
                         color = Color.White,
                         fontSize = 18.sp
                     )
                 }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = {
+                    viewModel.startSignIn(context as Activity, isSignUp = true) // Передаём Activity
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = MaterialTheme.shapes.medium,
+                enabled = !uiState.isLoading
+            ) {
+                Text(
+                    text = "Зарегистрироваться с Google",
+                    color = Color.White,
+                    fontSize = 18.sp
+                )
             }
             if (uiState.isLoading) {
                 Spacer(modifier = Modifier.height(16.dp))
