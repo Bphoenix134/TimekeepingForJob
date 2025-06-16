@@ -87,7 +87,7 @@ fun StatisticsScreen(
                 currentRoute = "statistics",
                 onNavigateToCalendar = onNavigateToCalendar,
                 onNavigateToStatistics = { /* Already on statistics */ },
-                onNavigateToSettings = onNavigateToSettings
+                onNavigateToSettings = onNavigateToSettings,
             )
         }
     ) { padding ->
@@ -98,7 +98,6 @@ fun StatisticsScreen(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Header with export button
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -153,7 +152,6 @@ fun StatisticsScreen(
                 )
             }
 
-            // Navigation arrows and period label
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -193,7 +191,6 @@ fun StatisticsScreen(
                 }
             }
 
-            // Statistics content
             when (currentMode) {
                 StatisticsMode.DAY -> DayStatistics(statisticsData as? DayStatisticsData)
                 StatisticsMode.WEEK -> WeekStatistics(statisticsData as? WeekStatisticsData)
@@ -269,7 +266,6 @@ private fun WeekStatistics(data: WeekStatisticsData?) {
             StatisticItem("Общее время перерывов", com.example.timemanagerforjob.utils.formatters.TimeFormatter.formatTimeForStatistics(data.totalPauseTime))
             StatisticItem("Количество выходных", "${data.weekendsInWeek}")
 
-            // Display daily breakdown
             Text(
                 text = "По дням:",
                 fontSize = 16.sp,

@@ -57,23 +57,23 @@ fun AuthScreen(
                 contentDescription = "App Logo",
                 modifier = Modifier.size(120.dp)
             )
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = "Добро пожаловать в Time Manager",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             Button(
                 onClick = {
-                    viewModel.startSignIn(context as Activity, isSignUp = false) // Передаём Activity
+                    viewModel.startSignIn(context as Activity, isSignUp = false)
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = MaterialTheme.shapes.medium,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF4285F4)
+                    containerColor = Color.LightGray
                 ),
                 enabled = !uiState.isLoading
             ) {
@@ -88,32 +88,11 @@ fun AuthScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Войти с Google",
-                        color = Color.White,
+                        text = "Продолжить с Google",
+                        color = Color.Black,
                         fontSize = 18.sp
                     )
                 }
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(
-                onClick = {
-                    viewModel.startSignIn(context as Activity, isSignUp = true) // Передаём Activity
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = MaterialTheme.shapes.medium,
-                enabled = !uiState.isLoading
-            ) {
-                Text(
-                    text = "Зарегистрироваться с Google",
-                    color = Color.White,
-                    fontSize = 18.sp
-                )
-            }
-            if (uiState.isLoading) {
-                Spacer(modifier = Modifier.height(16.dp))
-                CircularProgressIndicator()
             }
         }
     }

@@ -44,7 +44,7 @@ fun WorkScreen(
                 currentRoute = "calendar",
                 onNavigateToCalendar = { /* Already on calendar */ },
                 onNavigateToStatistics = onNavigateToStatistics,
-                onNavigateToSettings = onNavigateToSettings
+                onNavigateToSettings = onNavigateToSettings,
             )
         }
     ) { padding ->
@@ -53,7 +53,8 @@ fun WorkScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
             CalendarGrid(
                 currentMonth = calendarState.currentMonth,
@@ -63,6 +64,17 @@ fun WorkScreen(
                 onPreviousMonth = { calendarViewModel.goToPreviousMonth() },
                 onNextMonth = { calendarViewModel.goToNextMonth() }
             )
+
+            if (reportState.reportState != null && sessionState.sessionState == null) {
+                Text(
+                    text = "Отработано сегодня: ${formatTime(reportState.reportState.workTime)}",
+                    modifier = Modifier.padding(top = 16.dp),
+                    fontSize = 20.sp,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
 
             SessionControls(
                 isWorking = sessionState.sessionState != null,
@@ -84,14 +96,6 @@ fun WorkScreen(
                 }
             )
 
-            if (reportState.reportState != null && sessionState.sessionState == null) {
-                Text(
-                    text = "Отработано сегодня: ${formatTime(reportState.reportState.workTime)}",
-                    modifier = Modifier.padding(top = 16.dp),
-                    fontSize = 20.sp,
-                    textAlign = TextAlign.Center
-                )
-            }
         }
     }
 }

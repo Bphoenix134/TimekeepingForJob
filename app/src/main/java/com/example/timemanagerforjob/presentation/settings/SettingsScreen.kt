@@ -12,6 +12,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextFieldDefaults
 import com.example.timemanagerforjob.presentation.navigation.BottomNavigationBar
 
 @Composable
@@ -50,13 +52,25 @@ fun SettingsScreen(
                 value = uiState.weekdayRate.toString(),
                 onValueChange = { settingsViewModel.updateWeekdayRate(it.toFloatOrNull() ?: 0f) },
                 label = { Text("Почасовая ставка в будние дни (руб.)") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = TextFieldDefaults.colors(
+                    focusedIndicatorColor = Color.Gray,
+                    unfocusedIndicatorColor = Color.Gray,
+                    focusedLabelColor = Color.Gray,
+                    unfocusedLabelColor = Color.Gray
+                )
             )
             OutlinedTextField(
                 value = uiState.weekendRate.toString(),
                 onValueChange = { settingsViewModel.updateWeekendRate(it.toFloatOrNull() ?: 0f) },
                 label = { Text("Почасовая ставка в выходные дни (руб.)") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = TextFieldDefaults.colors(
+                    focusedIndicatorColor = Color.Gray,
+                    unfocusedIndicatorColor = Color.Gray,
+                    focusedLabelColor = Color.Gray,
+                    unfocusedLabelColor = Color.Gray
+                )
             )
             Row(
                 modifier = Modifier.fillMaxWidth(),
