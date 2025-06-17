@@ -1,6 +1,5 @@
 package com.example.timemanagerforjob.auth
 
-
 import android.app.Activity
 import android.content.Context
 import android.util.Log
@@ -92,9 +91,14 @@ class AuthRepository @Inject constructor(
     fun getCurrentUser(): GoogleIdTokenCredential? {
         val email = appPreferences.getUserEmail()
         return if (email != null) {
-            GoogleIdTokenCredential.Builder()
-                .setId(email)
-                .build()
+            try {
+                GoogleIdTokenCredential.Builder()
+                    .setId(email)
+                    .build()
+            } catch (e: Exception) {
+                Log.e("AuthRepository", "Invalid saved credential: ${e.message}")
+                null
+            }
         } else {
             null
         }

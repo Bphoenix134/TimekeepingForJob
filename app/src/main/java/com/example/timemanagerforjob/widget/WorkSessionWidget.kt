@@ -40,7 +40,6 @@ class WorkSessionWidget : AppWidgetProvider() {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var eventJob: Job? = null
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
@@ -91,7 +90,6 @@ class WorkSessionWidget : AppWidgetProvider() {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun onEnabled(context: Context) {
         super.onEnabled(context)
         Log.d("WorkSessionWidget", "onEnabled called")
@@ -120,7 +118,6 @@ class WorkSessionWidget : AppWidgetProvider() {
         scope.cancel()
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
         Log.d("WorkSessionWidget", "onReceive called with action: ${intent.action}")
@@ -201,7 +198,6 @@ class WorkSessionWidget : AppWidgetProvider() {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     private fun updateAppWidget(
         context: Context,
         appWidgetManager: AppWidgetManager,

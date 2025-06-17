@@ -1,7 +1,5 @@
 package com.example.timemanagerforjob.presentation.work
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.timemanagerforjob.domain.model.Result

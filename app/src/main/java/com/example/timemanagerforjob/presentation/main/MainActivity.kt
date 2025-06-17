@@ -4,6 +4,7 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
@@ -26,11 +27,23 @@ class MainActivity : ComponentActivity() {
         setContent {
             val navController = rememberNavController()
             val authViewModel: AuthViewModel = hiltViewModel()
-            val isAuthenticated = authViewModel.uiState.collectAsState().value.isAuthenticated
+            val authState = authViewModel.uiState.collectAsState().value
+
+            LaunchedEffect(authState.isAuthenticated) {
+                if (authState.isAuthenticated) {
+                    navController.navigate(Routes.Calendar) {
+                        popUpTo(Routes.Auth) { inclusive = true }
+                    }
+                } else {
+                    navController.navigate(Routes.Auth) {
+                        popUpTo(Routes.Calendar) { inclusive = true }
+                    }
+                }
+            }
 
             NavHost(
                 navController = navController,
-                startDestination = if (isAuthenticated) Routes.Calendar else Routes.Auth
+                startDestination = Routes.Auth
             ) {
                 composable(Routes.Auth) {
                     AuthScreen(

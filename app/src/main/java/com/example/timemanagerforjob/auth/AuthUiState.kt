@@ -1,6 +1,5 @@
 package com.example.timemanagerforjob.auth
 
-import android.content.Intent
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 
 data class AuthUiState(
