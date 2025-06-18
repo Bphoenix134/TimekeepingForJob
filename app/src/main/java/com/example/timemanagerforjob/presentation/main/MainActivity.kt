@@ -2,6 +2,7 @@ package com.example.timemanagerforjob.presentation.main
 
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.LaunchedEffect
@@ -31,48 +32,48 @@ class MainActivity : ComponentActivity() {
 
             LaunchedEffect(authState.isAuthenticated) {
                 if (authState.isAuthenticated) {
-                    navController.navigate(Routes.Calendar) {
-                        popUpTo(Routes.Auth) { inclusive = true }
+                    navController.navigate(Routes.CALENDAR) {
+                        popUpTo(Routes.AUTH) { inclusive = true }
                     }
                 } else {
-                    navController.navigate(Routes.Auth) {
-                        popUpTo(Routes.Calendar) { inclusive = true }
+                    navController.navigate(Routes.AUTH) {
+                        popUpTo(Routes.CALENDAR) { inclusive = true }
                     }
                 }
             }
 
             NavHost(
                 navController = navController,
-                startDestination = Routes.Auth
+                startDestination = Routes.AUTH
             ) {
-                composable(Routes.Auth) {
+                composable(Routes.AUTH) {
                     AuthScreen(
                         onAuthenticated = {
-                            navController.navigate(Routes.Calendar) {
-                                popUpTo(Routes.Auth) { inclusive = true }
+                            navController.navigate(Routes.CALENDAR) {
+                                popUpTo(Routes.AUTH) { inclusive = true }
                             }
                         }
                     )
                 }
-                composable(Routes.Calendar) {
+                composable(Routes.CALENDAR) {
                     WorkScreenContainer(
-                        onNavigateToStatistics = { navController.navigate(Routes.Statistics) },
-                        onNavigateToSettings = { navController.navigate(Routes.Settings) }
+                        onNavigateToStatistics = { navController.navigate(Routes.STATISTICS) },
+                        onNavigateToSettings = { navController.navigate(Routes.SETTINGS) }
                     )
                 }
-                composable(Routes.Statistics) {
+                composable(Routes.STATISTICS) {
                     StatisticsScreen(
-                        onNavigateToCalendar = { navController.navigate(Routes.Calendar) },
-                        onNavigateToSettings = { navController.navigate(Routes.Settings) }
+                        onNavigateToCalendar = { navController.navigate(Routes.CALENDAR) },
+                        onNavigateToSettings = { navController.navigate(Routes.SETTINGS) }
                     )
                 }
-                composable(Routes.Settings) {
+                composable(Routes.SETTINGS) {
                     SettingsScreen(
-                        onNavigateToCalendar = { navController.navigate(Routes.Calendar) },
-                        onNavigateToStatistics = { navController.navigate(Routes.Statistics) },
+                        onNavigateToCalendar = { navController.navigate(Routes.CALENDAR) },
+                        onNavigateToStatistics = { navController.navigate(Routes.STATISTICS) },
                         onNavigateToAuth = {
-                            navController.navigate(Routes.Auth) {
-                                popUpTo(Routes.Settings) { inclusive = true }
+                            navController.navigate(Routes.AUTH) {
+                                popUpTo(Routes.SETTINGS) { inclusive = true }
                             }
                         }
                     )
@@ -100,8 +101,8 @@ class MainActivity : ComponentActivity() {
 }
 
 object Routes {
-    const val Auth = "auth"
-    const val Calendar = "calendar"
-    const val Statistics = "statistics"
-    const val Settings = "settings"
+    const val AUTH = "auth"
+    const val CALENDAR = "calendar"
+    const val STATISTICS = "statistics"
+    const val SETTINGS = "settings"
 }

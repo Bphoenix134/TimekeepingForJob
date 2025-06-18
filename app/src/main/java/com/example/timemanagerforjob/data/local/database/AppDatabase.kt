@@ -1,5 +1,6 @@
 package com.example.timemanagerforjob.data.local.database
 
+import android.util.Log
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
@@ -24,6 +25,7 @@ abstract class AppDatabase : RoomDatabase() {
     companion object {
         val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(database: SupportSQLiteDatabase) {
+                Log.d("AppDatabase", "Executing migration 2 -> 3")
                 database.execSQL("""
                     CREATE TABLE time_reports_new (
                         date TEXT NOT NULL,
@@ -48,6 +50,7 @@ abstract class AppDatabase : RoomDatabase() {
 
         val MIGRATION_3_4 = object : Migration(3, 4) {
             override fun migrate(database: SupportSQLiteDatabase) {
+                Log.d("AppDatabase", "Executing migration 3 -> 4")
                 database.execSQL("""
                     CREATE TABLE selected_days_new (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,

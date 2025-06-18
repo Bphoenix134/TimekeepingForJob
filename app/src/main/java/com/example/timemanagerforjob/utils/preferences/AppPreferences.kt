@@ -7,6 +7,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import androidx.core.content.edit
 import java.time.YearMonth
+import android.util.Log
 
 @Singleton
 class AppPreferences @Inject constructor(
@@ -19,9 +20,7 @@ class AppPreferences @Inject constructor(
     }
 
     fun setFirstLaunchCompleted() {
-        prefs.edit() {
-            putBoolean("is_first_launch", false)
-        }
+        prefs.edit { putBoolean("is_first_launch", false) }
     }
 
     fun getWeekdayHourlyRate(): Float {
@@ -29,9 +28,7 @@ class AppPreferences @Inject constructor(
     }
 
     fun setWeekdayHourlyRate(rate: Float) {
-        prefs.edit() {
-            putFloat("weekday_rate", rate)
-        }
+        prefs.edit { putFloat("weekday_rate", rate) }
     }
 
     fun getWeekendHourlyRate(): Float {
@@ -44,14 +41,17 @@ class AppPreferences @Inject constructor(
             .putFloat("weekend_rate", rate)
     }
 
-    @SuppressLint("CommitPrefEdits")
     fun saveUserEmail(email: String?) {
-        prefs.edit()
-            .putString("user_email", email)
+        Log.d("AppPreferences", "Saving email: $email")
+        prefs.edit {
+            putString("user_email", email)
+        }
     }
 
     fun getUserEmail(): String? {
-        return prefs.getString("user_email", null)
+        val userEmail = prefs.getString("user_email", null)
+        Log.d("AppPreferences", "Retrieved email: $userEmail")
+        return userEmail
     }
 
     fun getBoolean(key: String, defaultValue: Boolean): Boolean {
@@ -59,11 +59,11 @@ class AppPreferences @Inject constructor(
     }
 
     fun setBoolean(key: String, value: Boolean) {
-        prefs.edit() { putBoolean(key, value) }
+        prefs.edit { putBoolean(key, value) }
     }
 
     fun isMonthInitialized(yearMonth: YearMonth): Boolean {
-        return getBoolean("month_${yearMonth.year}_${yearMonth.monthValue}_initialized", false)
+        return this.getBoolean("month_${yearMonth.year}_${yearMonth.monthValue}_initialized", false)
     }
 
     fun setMonthInitialized(yearMonth: YearMonth) {

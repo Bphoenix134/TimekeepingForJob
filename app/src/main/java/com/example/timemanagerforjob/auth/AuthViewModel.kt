@@ -26,7 +26,6 @@ class AuthViewModel @Inject constructor(
 
     private fun checkCurrentUser() {
         val currentUser = authRepository.getCurrentUser()
-        Log.d("AuthViewModel", "checkCurrentUser: currentUser = $currentUser")
         _uiState.value = _uiState.value.copy(
             isAuthenticated = currentUser != null,
             user = currentUser
@@ -52,27 +51,6 @@ class AuthViewModel @Inject constructor(
                         isAuthenticated = false,
                         errorMessage = result.exception.message ?: "Ошибка входа",
                         isLoading = false
-                    )
-                }
-            }
-        }
-    }
-
-    fun signOut() {
-        viewModelScope.launch {
-            when (val result = authRepository.signOut()) {
-                is Result.Success -> {
-                    Log.d("AuthViewModel", "Sign-out successful")
-                    _uiState.value = _uiState.value.copy(
-                        isAuthenticated = false,
-                        user = null,
-                        errorMessage = null
-                    )
-                }
-                is Result.Failure -> {
-                    Log.e("AuthViewModel", "Sign-out failed", result.exception)
-                    _uiState.value = _uiState.value.copy(
-                        errorMessage = result.exception.message ?: "Ошибка выхода"
                     )
                 }
             }

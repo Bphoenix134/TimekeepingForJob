@@ -53,7 +53,7 @@ class AuthRepository @Inject constructor(
                 val credential = result.credential
 
                 if (credential is GoogleIdTokenCredential) {
-                    credential.id?.let { appPreferences.saveUserEmail(it) }
+                    credential.id.let { appPreferences.saveUserEmail(it) }
                     Log.d("AuthRepository", "Sign-in successful: ${credential.id}")
                     Result.Success(credential)
                 } else {

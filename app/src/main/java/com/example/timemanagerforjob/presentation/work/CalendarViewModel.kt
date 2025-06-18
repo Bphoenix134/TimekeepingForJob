@@ -1,5 +1,6 @@
 package com.example.timemanagerforjob.presentation.work
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.timemanagerforjob.domain.model.Result
@@ -34,6 +35,7 @@ class CalendarViewModel @Inject constructor(
     private fun initializeFirstLaunch() {
         if (appPreferences.isFirstLaunch()) {
             viewModelScope.launch {
+                Log.d("CalendarViewModel", "FirstLaunch")
                 val currentYear = YearMonth.now().year
                 for (month in 1..12) {
                     calendarRepository.initializeWeekendDays(currentYear, month)
@@ -45,6 +47,7 @@ class CalendarViewModel @Inject constructor(
 
     private fun loadMonthData() {
         viewModelScope.launch {
+            Log.d("CalendarViewModel", "loadMonthData")
             _uiState.update { it.copy(isLoading = true) }
             val month = _uiState.value.currentMonth
             if (!appPreferences.isMonthInitialized(month)) {
@@ -92,10 +95,3 @@ class CalendarViewModel @Inject constructor(
         loadMonthData()
     }
 }
-
-data class CalendarUiState(
-    val currentMonth: YearMonth = YearMonth.now(),
-    val selectedDays: Set<Int> = emptySet(),
-    val isLoading: Boolean = false,
-    val errorMessage: String? = null
-)

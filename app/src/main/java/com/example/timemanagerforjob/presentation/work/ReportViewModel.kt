@@ -1,5 +1,6 @@
 package com.example.timemanagerforjob.presentation.work
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.timemanagerforjob.data.local.dao.TimeReportDao
@@ -41,8 +42,16 @@ class ReportViewModel @Inject constructor(
 
     fun loadTodayReport() {
         viewModelScope.launch {
+            val userEmail = appPreferences.getUserEmail()
+            Log.d("ReportViewModel", "Loading report for today, userEmail: $userEmail")
+            if (userEmail == null) {
+                Log.e("ReportViewModel", "No user logged in, skipping report load")
+                _uiState.update { it.copy(reportState = null, errorMessage = "Необходимо авторизоваться") }
+                return@launch
+            }
             when (val result = timeReportRepository.getReportByDate(LocalDate.now())) {
                 is Result.Success -> {
+                    Log.d("ReportViewModel", "Report loaded: ${result.value}")
                     _uiState.update {
                         it.copy(
                             reportState = result.value,
@@ -51,8 +60,13 @@ class ReportViewModel @Inject constructor(
                     }
                 }
                 is Result.Failure -> {
-                    ErrorHandler.emitError("Не удалось загрузить отчёт за сегодня")
-                    _uiState.update { it.copy( reportState = null ) }
+                    Log.e("ReportViewModel", "Failed to load report: ${result.exception.message}")
+                    if (result.exception.message == "No report found for date") {
+                        _uiState.update { it.copy(reportState = null, errorMessage = null) }
+                    } else {
+                        ErrorHandler.emitError("Не удалось загрузить отчёт за сегодня: ${result.exception.message}")
+                        _uiState.update { it.copy(reportState = null) }
+                    }
                 }
             }
         }
