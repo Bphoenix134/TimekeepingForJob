@@ -1,67 +1,111 @@
-# TimekeepingForJob
+# TimeManagerForJob
 
-This is a mobile application built with Kotlin using Clean Architecture and Jetpack Compose. The app is designed to help users track their work hours, manage their work schedule, and keep track of time with a user-friendly calendar interface.
+**TimeManagerForJob** is an Android application for tracking work time with Google authentication support. It is designed for freelancers, self-employed professionals, and specialists who need to monitor actual working hours, manage weekends, and access detailed time statistics.
 
-## Features
+---
 
-1. **Calendar View**
-   - A calendar that highlights weekends and shows the current day. This helps users to quickly visualize the current date and their schedule.
-  
-2. **Work Timer**
-   - A timer that can be started, paused, and resumed with the press of a button. The timer tracks the time spent at work, making it easy for users to monitor their hours worked (especially useful for hourly-paid employees).
-   
-3. **Home Screen Widget**
-   - A convenient widget for the home screen that allows users to control the timer without opening the app. This makes it easier to start, stop, and pause the timer without navigating through the app.
+## 🧰 Key Features
 
-4. **Statistics Tracking**
-   - Users can view detailed statistics on their work hours, including the total hours worked for the month and how much more is needed to reach their goal. This helps with tracking work performance and hours for payroll purposes.
+* Google Sign-In authentication (all user data is linked to their email);
+* Smart calendar:
 
-## Architecture
+  * Automatic highlighting of Saturdays and Sundays as weekends;
+  * Ability for users to manually mark custom days off;
+  * Current day is always highlighted;
+* Work session tracking:
 
-This application is structured with **Clean Architecture**, ensuring clear separation of concerns between the presentation, domain, and data layers. The app uses **Jetpack Compose** for building the UI, providing a modern and declarative approach to UI development.
+  * "Start Work" button launches a timer;
+  * Supports pause/resume functionality;
+  * Session finish saves data and updates statistics;
+* Statistics screen:
 
-### Key Technologies:
-- **Kotlin** for Android development
-- **Jetpack Compose** for building the user interface
-- **Clean Architecture** for clear separation of concerns
-- **Room** for local data storage and persistence
-- **WorkManager** for background tasks and handling time tracking in the background
+  * Daily, weekly, and monthly views;
+  * Displays total and average work time;
+  * Tracks breaks;
+  * Calculates potential earnings based on hourly rate;
+* Settings screen:
 
-## Getting Started
+  * Configure hourly rates for weekdays and weekends;
+  * Switch account (sign out);
+* Export statistics to Excel.
 
-### Prerequisites
+---
 
-- Android Studio with Kotlin support
-- Gradle
-- Android SDK 21 or higher
+## 📁 Project Structure
 
-### Installation
+```
+timemanagerforjob/
+├── auth/                 # Authentication (Google ID, repository, UI)
+├── data/                 # Data source layer
+│   ├── local/            # Local database (Room)
+│   │   ├── dao/          # Data access interfaces
+│   │   ├── database/     # DB configuration
+│   │   ├── entity/       # Room entity models
+│   │   ├── mapper/       # Entity ↔ Domain converters
+│   ├── repository/       # Repository implementations
+├── di/                   # Dagger Hilt modules
+├── domain/               # Business logic layer
+│   ├── model/            # Domain models
+│   ├── repository/       # Repository interfaces
+│   ├── usecases/         # Use case definitions
+├── presentation/         # UI layer (Jetpack Compose)
+│   ├── main/             # MainActivity and navigation
+│   ├── navigation/       # Bottom navigation
+│   ├── settings/         # Settings screen
+│   ├── statistics/       # Statistics screen
+│   ├── work/             # Work screen and calendar
+│   │   ├── components/   # Reusable components for work screen
+├── services/             # Supporting services (e.g., notifications)
+├── ui/                   # App theming and design
+│   ├── theme/            # Colors, typography, etc.
+├── utils/                # Utility classes
+│   ├── events/           # Event handling
+│   ├── formatters/       # Date/time formatters
+│   ├── notifications/    # Notification utilities
+│   ├── preferences/      # SharedPreferences management
+├── widget/               # Custom UI components (if any)
+```
 
-1. Clone the repository:
+---
+
+## ⚙️ Technologies Used
+
+* **Kotlin**, **Jetpack Compose**;
+* **Room** (local database);
+* **Dagger Hilt** (dependency injection);
+* **Google Identity Services** (authentication);
+* **AndroidX**;
+* **MVVM + Clean Architecture**;
+* **Excel export** using Apache POI or similar.
+
+---
+
+## 🚀 Getting Started
+
+1. Install Android Studio (latest stable version recommended);
+2. Clone the repository:
+
    ```bash
-   git clone https://github.com/your-username/your-repository.git
+   git clone https://github.com/Bphoenix134/TimekeepingForJob
    ```
+3. Provide your `web_client_id` in `res/values/strings.xml`:
 
-2. Open the project in Android Studio.
+   ```xml
+   <string name="web_client_id">your-google-client-id</string>
+   ```
+4. Build and run the application on an emulator or physical device.
 
-3. Build the project by selecting **Build > Make Project** from the Android Studio menu.
+---
 
-4. Run the application on an emulator or a physical device.
+## 📌 Notes
 
-## Usage
+* All user data is stored locally and associated with the authenticated Google account (via email);
+* This project does not include a license (you can optionally add one, e.g., MIT, Apache 2.0).
 
-1. **Calendar View**: Navigate to the calendar screen where weekends are highlighted, and the current date is displayed.
-  
-2. **Work Timer**: Tap the "Start" button to begin tracking your work hours. You can pause or resume the timer at any time. The timer will continue to run in the background if you switch to another app.
+---
 
-3. **Home Screen Widget**: Add the widget to your home screen by long-pressing the home screen and selecting "Widgets." Find the "Work Timer" widget and drag it to your home screen. Use it to control the timer directly.
+## 💬 Feedback
 
-4. **Statistics**: Go to the statistics section to see your total work hours for the current month and how much time you have left to meet your target.
+For questions, bugs, or suggestions, please create an issue or contact the developer via email.
 
-## Contributing
-
-Contributions are welcome! Please fork the repository and submit a pull request for any improvements or bug fixes.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+---
