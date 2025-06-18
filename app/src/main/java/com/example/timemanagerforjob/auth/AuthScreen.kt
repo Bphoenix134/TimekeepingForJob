@@ -65,9 +65,7 @@ fun AuthScreen(
             )
             Spacer(modifier = Modifier.height(20.dp))
             Button(
-                onClick = {
-                    viewModel.startSignIn(context as Activity, isSignUp = false)
-                },
+                onClick = { viewModel.startSignIn() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),

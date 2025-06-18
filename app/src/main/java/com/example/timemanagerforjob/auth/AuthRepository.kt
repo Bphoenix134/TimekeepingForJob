@@ -53,7 +53,10 @@ class AuthRepository @Inject constructor(
                 val credential = result.credential
 
                 if (credential is GoogleIdTokenCredential) {
-                    credential.id.let { appPreferences.saveUserEmail(it) }
+                    credential.id.let {
+                        appPreferences.saveUserEmail(it)
+                        appPreferences.saveIdToken(credential.idToken)
+                    }
                     Log.d("AuthRepository", "Sign-in successful: ${credential.id}")
                     Result.Success(credential)
                 } else {
@@ -73,12 +76,52 @@ class AuthRepository @Inject constructor(
         }
     }
 
+    suspend fun trySilentSignIn(activity: Activity): Result<GoogleIdTokenCredential> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val googleIdOption = GetGoogleIdOption.Builder()
+                    .setFilterByAuthorizedAccounts(true)
+                    .setServerClientId(context.getString(R.string.web_client_id))
+                    .setAutoSelectEnabled(true)
+                    .setNonce(generateNonce())
+                    .build()
+
+                val request = GetCredentialRequest.Builder()
+                    .addCredentialOption(googleIdOption)
+                    .build()
+
+                val result = credentialManager.getCredential(activity, request)
+                val credential = result.credential
+
+                if (credential is GoogleIdTokenCredential) {
+                    appPreferences.saveUserEmail(credential.id)
+                    appPreferences.saveIdToken(credential.idToken)
+                    Log.d("AuthRepository", "Silent sign-in successful: ${credential.id}")
+                    Result.Success(credential)
+                } else {
+                    Log.e("AuthRepository", "Unexpected credential type")
+                    Result.Failure(Exception("Unexpected credential type"))
+                }
+            } catch (e: GetCredentialException) {
+                Log.e("AuthRepository", "Silent sign-in failed: ${e.message}")
+                Result.Failure(e)
+            } catch (e: GoogleIdTokenParsingException) {
+                Log.e("AuthRepository", "Invalid Google ID token: ${e.message}")
+                Result.Failure(e)
+            } catch (e: Exception) {
+                Log.e("AuthRepository", "Unexpected error: ${e.message}")
+                Result.Failure(e)
+            }
+        }
+    }
+
     suspend fun signOut(): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
                 val request = ClearCredentialStateRequest()
                 credentialManager.clearCredentialState(request)
                 appPreferences.saveUserEmail(null)
+                appPreferences.saveIdToken(null)
                 Log.d("AuthRepository", "Signed out successfully")
                 Result.Success(Unit)
             } catch (e: Exception) {
@@ -90,10 +133,12 @@ class AuthRepository @Inject constructor(
 
     fun getCurrentUser(): GoogleIdTokenCredential? {
         val email = appPreferences.getUserEmail()
-        return if (email != null) {
+        val idToken = appPreferences.getIdToken()
+        return if (email != null && idToken != null) {
             try {
                 GoogleIdTokenCredential.Builder()
                     .setId(email)
+                    .setIdToken(idToken)
                     .build()
             } catch (e: Exception) {
                 Log.e("AuthRepository", "Invalid saved credential: ${e.message}")

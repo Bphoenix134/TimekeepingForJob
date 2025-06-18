@@ -35,10 +35,10 @@ class AppPreferences @Inject constructor(
         return prefs.getFloat("weekend_rate", 750f)
     }
 
-    @SuppressLint("CommitPrefEdits")
     fun setWeekendHourlyRate(rate: Float) {
-        prefs.edit()
-            .putFloat("weekend_rate", rate)
+        prefs.edit {
+            putFloat("weekend_rate", rate)
+        }
     }
 
     fun saveUserEmail(email: String?) {
@@ -68,5 +68,18 @@ class AppPreferences @Inject constructor(
 
     fun setMonthInitialized(yearMonth: YearMonth) {
         setBoolean("month_${yearMonth.year}_${yearMonth.monthValue}_initialized", true)
+    }
+
+    fun saveIdToken(token: String?) {
+        Log.d("AppPreferences", "Saving idToken: $token")
+        prefs.edit {
+            putString("id_token", token)
+        }
+    }
+
+    fun getIdToken(): String? {
+        val idToken = prefs.getString("id_token", null)
+        Log.d("AppPreferences", "Retrieved idToken: $idToken")
+        return idToken
     }
 }
